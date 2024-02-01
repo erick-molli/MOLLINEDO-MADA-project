@@ -1,170 +1,95 @@
 ---
-title: "Example Manuscript Template for a Data Analysis Project"
-subtitle: ""
-author: Andreas Handel
-date: "`r Sys.Date()`"
+title: "Elemental characterization of personal samples from the HAPIN trial for Source Apportionment"
+subtitle: "Project: Part 1"
+author: Erick E. Mollinedo
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
 format:
   docx:
     toc: false
     number-sections: true
     highlight-style: github
-bibliography: ../assets/dataanalysis-references.bib
-csl: ../assets/apa.csl
 ---
-
-The structure below is one possible setup for a data analysis project (including the course project). For a manuscript, adjust as needed. 
-You don't need to have exactly these sections, but the content covering those sections should be addressed.
-
-This uses MS Word as output format. [See here](https://quarto.org/docs/output-formats/ms-word.html) for more information. You can switch to other formats, like html or pdf. See [the Quarto documentation](https://quarto.org/) for other formats.
-
 
 ```{r, echo=FALSE, message=FALSE}
 # load a few R packages
 library(here)
 library(knitr)
+library(tidyverse)
+library(readxl)
 ```
 
-
-
-# Summary/Abstract
-_Write a summary of your project._
-
-
-{{< pagebreak >}}
-
-
-# Introduction 
+# Introduction
 
 ## General Background Information
-_Provide enough background on your topic that others can understand the why and how of your analysis_ 
+
+Household air pollution (HAP), due to the combustion of solid fuels for cooking and heating, is one of the most prominent environmental health issues in low- and middle-income countries (LMICs).^1^ Exposure to HAP has been linked to more than 2.31 million deaths in 2019 and it is associated with adverse cardiovascular and respiratory health outcomes.^2,3^ Particulate matter with an aerodynamic diameter less than 2.5 micrometers (PM~2.5~) is one of the major air pollutants chemically and physically composed of crustal material, black carbon (BC), organic compounds, metals and others. Toxicity from PM~2.5~ depends, among many factors, on the chemical composition of the particles which heavily depend on the sources of emissions.^4,5^
+
+The identification of point sources of pollution is important for the development of strategies to improve air quality. Source apportionment (SA) is a methodology to reconstruct the impact of emissions from different sources, a method applied to different pollutants such as particulate matter.^6^ The most used SA methods includes receptor models, an example of this is the positive matrix factorization (PMF). One advantage of PMF is that it does not require the source profiles prior to analysis and there is no limit on the number of sources, however, it is required the knowledge of potential source profiles. Another important piece before conducting source apportionment is to correctly process the data (which includes concentrations and uncertainties), and to explore associations to try to identify the potential sources. Just a few studies about SA in LMICs have been published, therefore it is important to characterize chemical composition and potential sources of air pollutants in these settings.^7-9^
 
 ## Description of data and data source
-_Describe what the data is, what it contains, where it is from, etc. Eventually this might be part of a methods section._
+
+The data comes from filter samples of PM~2.5~ from personal exposure measurements conducted in pregnant women from the Household Air Pollution Intervention Network [(HAPIN)](https://www.hapintrial.org/) trial, in Guatemala. In brief, this is a randomized controlled trial, where a liquefied petroleum gas (LPG) stove was delivered as an intervention to half of the pregnant women participants, meanwhile the other half remained cooking using their biomass stove. The intervention was evaluated in terms of reduction of exposures and specific health outcomes by comparing the two study groups (Control and Intervention). The filter samples represent the exposures to PM~2.5~ in a 24-hour period. In total, six hundred and forty eight sample filters are available, where eighteen correspond to field blanks. For these filters, the elemental composition was determined using X-Ray Fluorescence (XRF) to determine the concentrations of 24 elements.
+
+1.  Concentrations:
+
+As seen in the following glimpse from the one of the spreadsheets that contains the concentrations data, each filter sample has its unique ID in `Filter`. There are other 24 variables that list the concentrations of each element. The concentrations are listed in micrograms per square centimeter (ug/cm^2^). Also, each filter is categorized in either two types (Personal sample or Blank) under `Type`.
+
+```{r}
+concentration <- read_excel(here("data", "raw-data", "conc_unc_hapingt_emollinedo.xlsx"), sheet = "Concentration")
+
+#Have a 'glimpse' of the data
+glimpse(concentration)
+
+#Check which values are under the `Type` variable
+unique(concentration$Type)
+```
+
+2.  Uncertainties:
+
+The uncertainties are stored on a different tab from the same excel file, but they match to the concentrations for each filter sample (rows) and each element (columns). These values are also stored in ug/cm^2^.
+
+```{r}
+uncertainty <- read_excel(here("data", "raw-data", "conc_unc_hapingt_emollinedo.xlsx"), sheet = "Uncertainty")
+
+#Produce a summary of uncertainties by each element
+summary(uncertainty)
+```
+
+3.  Other variables from the HAPIN study:
+
+Another source of data is a .csv file that contains over 1000 variables collected from the study, associated to a single filter sample or a single participant (depending on the perspective). I am only interested in exploring some of the variables such as "Treatment" and "Timepoint" to categorize the filters according to study arm or type of fuel. "PM~2.5~", "Black Carbon" and "Carbon monoxide" to have a reference of the concentrations of the three air pollutants measured. And other variables that record exposures such as trash burning, vehicle emissions, tobacco smoke among others.
 
 ## Questions/Hypotheses to be addressed
-_State the research questions you plan to answer with this analysis._
 
-To cite other work (important everywhere, but likely happens first in introduction), make sure your references are in the bibtex file specified in the YAML header above (here `dataanalysis_template_references.bib`) and have the right bibtex key. Then you can include like this:
+One of the objectives of this project is to create a clean output that consists in a file with adjusted concentrations for all samples and each elemental species, and another file with the adjusted uncertainties for the same samples and elemental species. These outputs will be used as inputs for the EPA PMF 5.0 software to try to determine the potential sources that contributed to these samples. However, there are certain questions that I plan to answer:
 
-Examples of reproducible research projects can for instance be found in [@mckay2020; @mckay2020a].
+1.  What elements are correlated among each other from these filter samples?
+2.  Is there a difference in concentrations if we categorize the samples by type of fuel and by study arm?
+3.  What exposures could explain the variations in the concentrations of the most significant elemental species?
 
+Answering these questions will also be helpful before performing the PMF analysis using the EPA software, to check patterns and associations between elemental species.
 
+# Methods
 
-{{< pagebreak >}}
+## Data processing
 
+First, the concentration values will be cleaned by removing unnecessary character such as brackets, and by standardizing in the same numeric notation. Then, all elements where more than 50% of the samples are below the detection limit (DL) will be filtered out. The detection limit for each elemental species is listed in the same excel spreadsheet that contains the raw concentrations and uncertainties. For the remaining elemental species, the concentrations will be adjusted based on the blank filters, and the values below DL will be replaced as their corresponding DL divided by the square root of 2. Finally, the concentrations will be transformed to micrograms per cubic meter (ug/m^3^) operating the concentration by the filter area, divided by the sample volume. Also, the uncertainties will be transformed to ug/m^3^ to match the units of the concentrations. In addition, the black carbon concentrations will be added to add another species to the analysis.
 
-# Methods 
-
-_Describe your methods. That should describe the data, the cleaning processes, and the analysis approaches. You might want to provide a shorter description here and all the details in the supplement._
-
-
-## Schematic of workflow
-
-Sometimes you might want to show a schematic diagram/figure that was not created with code (if you can do it with code, do it). @fig-schematic is an example of some - completely random/unrelated - schematic that was generated with Biorender.
-We store those figures in the `assets` folder.
-
-```{r}
-#| label: fig-schematic
-#| fig-cap: "A figure that is manually generated and shows some overview/schematic. This has nothing to do with the data, it's just a random one from one of our projects I found and placed here."
-#| echo: FALSE
-knitr::include_graphics(here("products","assets","antigen-recognition.png"))
-```
-
-
-
-
-## Data aquisition
-_As applicable, explain where and how you got the data. If you directly import the data from an online source, you can combine this section with the next._
-
-
-## Data import and cleaning
-_Write code that reads in the file and cleans it so it's ready for analysis. Since this will be fairly long code for most datasets, it might be a good idea to have it in one or several R scripts. If that is the case, explain here briefly what kind of cleaning/processing you do, and provide more details and well documented code somewhere (e.g. as supplement in a paper). All materials, including files that contain code, should be commented well so everyone can follow along._
-
+The uncertainties will be processed by first, removing all the elemental species that had more than 50% of their samples below the detection limit, as seen above. Then, the uncertainties will be adjusted based on equations derived from the law of propagation of uncertainty. In brief, the equations consider the individual uncertainties from each one of the variables, in this case the XRF instrument uncertainty, the area of the filter, volume, and the attenuation (in case of the Black carbon measurements).
 
 ## Statistical analysis
-_Explain anything related to your statistical analyses._
 
+The correlation (r^2^) between elemental species will be determined using either individual paired correlations or by a correlation plot matrix. Additional plots, such as boxplots, to visualize and compare how the concentrations differ by type of fuel and by study arm. These differences will be assessed for statistical significance. After exploring the distribution that best fits the dataste, the most appropriate model will be implemented to explore what exposure variables are mostly associated with the concentrations of the most significant elemental species.
 
-{{< pagebreak >}}
-
-
-# Results
-
-## Exploratory/Descriptive analysis
-
-_Use a combination of text/tables/figures to explore and describe your data. Show the most important descriptive results here. Additional ones should go in the supplement. Even more can be in the R and Quarto files that are part of your project._
-
-
-@tbl-summarytable shows a summary of the data.
-
-Note the loading of the data providing a **relative** path using the `../../` notation. (Two dots means a folder up). You never want to specify an **absolute** path like `C:\ahandel\myproject\results\` because if you share this with someone, it won't work for them since they don't have that path. You can also use the `here` R package to create paths. See examples of that below.
-
-```{r}
-#| label: tbl-summarytable
-#| tbl-cap: "Data summary table."
-#| echo: FALSE
-resulttable=readRDS("../../results/summarytable.rds")
-knitr::kable(resulttable)
-```
-
-
-
-## Basic statistical analysis
-
-_To get some further insight into your data, if reasonable you could compute simple statistics (e.g. simple models with 1 predictor) to look for associations between your outcome(s) and each individual predictor variable. Though note that unless you pre-specified the outcome and main exposure, any "p<0.05 means statistical significance" interpretation is not valid._
-
-
-@fig-result shows a scatterplot figure produced by one of the R scripts.
-
-```{r}
-#| label: fig-result
-#| fig-cap: "Height and weight stratified by gender."
-#| echo: FALSE
-knitr::include_graphics(here("results","height-weight-stratified.png"))
-```
-
-
-## Full analysis
-
-_Use one or several suitable statistical/machine learning methods to analyze your data and to produce meaningful figures, tables, etc. This might again be code that is best placed in one or several separate R scripts that need to be well documented. You want the code to produce figures and data ready for display as tables, and save those. Then you load them here._
-
-Example @tbl-resulttable2 shows a summary of a linear model fit.
-
-```{r}
-#| label: tbl-resulttable2
-#| tbl-cap: "Linear model fit table."
-#| echo: FALSE
-resulttable2 = readRDS(here("results","tables-files","resulttable2.rds"))
-knitr::kable(resulttable2)
-```
-
-
-{{< pagebreak >}}
-
-
-# Discussion
-
-## Summary and Interpretation
-_Summarize what you did, what you found and what it means._
-
-## Strengths and Limitations
-_Discuss what you perceive as strengths and limitations of your analysis._
-
-## Conclusions
-_What are the main take-home messages?_
-
-_Include citations in your Rmd file using bibtex, the list of references will automatically be placed at the end_
-
-This paper [@leek2015] discusses types of analyses. 
-
-These papers [@mckay2020; @mckay2020a] are good examples of papers published using a fully reproducible setup similar to the one shown in this template. 
-
-Note that this cited reference will show up at the end of the document, the reference formatting is determined by the CSL file specified in the YAML header. Many more style files for almost any journal [are available](https://www.zotero.org/styles). You also specify the location of your bibtex reference file in the YAML. You can call your reference file anything you like, I just used the generic word `references.bib` but giving it a more descriptive name is probably better.
-
-
-{{< pagebreak >}}
 
 # References
 
-
-
+1.  Gordon, S. B. et al. Respiratory risks from household air pollution in low and middle income countries. The Lancet Respiratory Medicine 2, 823–860 (2014).
+2.  Murray, C. J. L. et al. Global burden of 87 risk factors in 204 countries and territories, 1990–2019: a systematic analysis for the Global Burden of Disease Study 2019. The Lancet 396, 1223–1249 (2020).
+3.  Pope, C. A. & Dockery, D. W. Health Effects of Fine Particulate Air Pollution: Lines that Connect. Journal of the Air & Waste Management Association 56, 709–742 (2006).
+4.  Clasen, T. et al. Design and Rationale of the HAPIN Study: A Multicountry Randomized Controlled Trial to Assess the Effect of Liquefied Petroleum Gas Stove and Continuous Fuel Distribution. Environ Health Perspect 128, 047008 (2020).
+5.  Mohammed, M. O. A. et al. Potential Toxicological and Cardiopulmonary Effects of PM2.5 Exposure and Related Mortality: Findings of Recent Studies Published during 2003-2013. Biomed Environ Sci.
+6.  Viana, M. et al. Source apportionment of particulate matter in Europe: A review of methods and results. Journal of Aerosol Science 39, 827–849 (2008).
+7.  Zhou, Z. et al. Chemical Characterization and Source Apportionment of Household Fine Particulate Matter in Rural, Peri-urban, and Urban West Africa. Environ. Sci. Technol. 48, 1343–1351 (2014).
+8.  Sharma, S. K. et al. Source Apportionment of PM2.5 in Delhi, India Using PMF Model. Bull Environ Contam Toxicol 97, 286–293 (2016).
+9.  Martínez-Cinco, M., Santos-Guzmán, J. & Mejía-Velázquez, G. Source apportionment of PM 2.5 for supporting control strategies in the Monterrey Metropolitan Area, Mexico. Journal of the Air & Waste Management Association 66, 631–642 (2016).
