@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.4.537">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Erick E. Mollinedo">
+<meta name="dcterms.date" content="2024-02-21">
+
+<title>Data cleaning</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="data_cleaning_code_files/libs/clipboard/clipboard.min.js"></script>
+<script src="data_cleaning_code_files/libs/quarto-html/quarto.js"></script>
+<script src="data_cleaning_code_files/libs/quarto-html/popper.min.js"></script>
+<script src="data_cleaning_code_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="data_cleaning_code_files/libs/quarto-html/anchor.min.js"></script>
+<link href="data_cleaning_code_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="data_cleaning_code_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="data_cleaning_code_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="data_cleaning_code_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="data_cleaning_code_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Data cleaning</h1>
+<p class="subtitle lead">Project: Part 2</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Erick E. Mollinedo </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">February 21, 2024</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Packages needed for data cleaning and data exploration</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>here() starts at C:/Users/molli/OneDrive/Documentos/UGA/Spring 2024/MADA/MOLLINEDO-MADA-project</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readxl)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+✔ dplyr     1.1.3     ✔ readr     2.1.4
+✔ forcats   1.0.0     ✔ stringr   1.5.0
+✔ ggplot2   3.4.4     ✔ tibble    3.2.1
+✔ lubridate 1.9.3     ✔ tidyr     1.3.0
+✔ purrr     1.0.2     </code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
+</div>
+</div>
+<section id="hapin-guatemala-data-cleaning" class="level2">
+<h2 class="anchored" data-anchor-id="hapin-guatemala-data-cleaning">HAPIN Guatemala data cleaning</h2>
+<p>First I will load the HAPIN Guatemala dataset that has some of the variables of interest and assign it to the <code>hapin</code> dataframe, and I will also load a file that has all the filter IDs that I need to find in the <code>hapin</code> dataframe, I’ll assign it to the <code>xrflist</code> dataframe.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>hapin <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"raw-data"</span>, <span class="st">"HAPIN_EX17_Guatemala_20230728.csv"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: One or more parsing issues, call `problems()` on your data frame for details,
+e.g.:
+  dat &lt;- vroom(...)
+  problems(dat)</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 2560 Columns: 1019
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr  (698): irc, masked_id, trt_blinded, timepoint, s6_hh_type_actual, s6_da...
+dbl  (132): MAyears_at_screening, h41_pri_wall, h41_k_length, h41_k_width, h...
+lgl  (174): h41_kap1_loc_other, h41_kap2_loc_other, h41_sap_loc, h41_sap_loc...
+time  (15): h41_m_st, h41_peo_st, h41_kap1_ecm_st, h41_kap2_ecm_st, h41_m_ec...
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>xrflist <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"raw-data"</span>, <span class="st">"sa_filters_emollinedo.csv"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 648 Columns: 1
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr (1): filter_id
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+</div>
+<p>Now I will only select the variables I am interested to work with.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>hapin <span class="ot">&lt;-</span> hapin <span class="sc">%&gt;%</span> <span class="fu">select</span>(trt_blinded, timepoint, h41_m_ecm_fid, h41_b_ecm_fid, h41b_filter1, h41b_filter2, h42_cook, h42_smoke, h42_coil, h42_trash, h42_kero, h42_incence, h42_generator, h42_smoked, h42_crop, h42_smoky_kitc, ECM_grav_neph_conc_M, ECM_bc_conc_M, CO_avg_ppm_M)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>And now I will select only the observations from <code>hapin</code> that correspond to the filter IDs from the <code>xrflist</code> dataframe. These filter IDs could be located in either of the following variables: <code>h41_m_ecm_fid</code>, <code>h41_b_ecm_fid</code>, <code>h41b_filter1</code>, <code>h41b_filter2</code>, so I searched in these columns. But first I made sure all the filter IDs were in the same format as the IDs from the <code>xrflist</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Make sure all filter IDs are upper case, using the `mutate()` function with `toupper()`</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>hapin <span class="ot">&lt;-</span> hapin <span class="sc">%&gt;%</span> </span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">h41_m_ecm_fid =</span> <span class="fu">toupper</span>(h41_m_ecm_fid),</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">h41b_filter1 =</span> <span class="fu">toupper</span>(h41b_filter1),</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">h41_b_ecm_fid =</span> <span class="fu">toupper</span>(h41_b_ecm_fid),</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">h41b_filter2 =</span> <span class="fu">toupper</span>(h41b_filter2))</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="co">#Select all filters that match with the list of filters from XRF, using the `filter()` function.</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>hapin <span class="ot">&lt;-</span> hapin <span class="sc">%&gt;%</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(h41_m_ecm_fid <span class="sc">%in%</span> xrflist<span class="sc">$</span>filter_id <span class="sc">|</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>           h41b_filter1 <span class="sc">%in%</span> xrflist<span class="sc">$</span>filter_id <span class="sc">|</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>           h41_b_ecm_fid <span class="sc">%in%</span> xrflist<span class="sc">$</span>filter_id <span class="sc">|</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>           h41b_filter2 <span class="sc">%in%</span> xrflist<span class="sc">$</span>filter_id)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Here I will create a new variable called <code>fueltype</code>, this variable will be coded as “LPG” or “Biomass” depending on the type of visit and the treatment or intervention <code>trt_blinded</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Concatenate `trt_blinded` and `timepoint` into a new temporary variable</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>hapin<span class="sc">$</span>concatenated <span class="ot">&lt;-</span> <span class="fu">paste</span>(hapin<span class="sc">$</span>trt_blinded, hapin<span class="sc">$</span>timepoint) </span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="co">#Create a new variable `fueltype` that categorizes all the observations by type of fuel ('R' means the visit belongs to the 'Control' treatment and 'Q' for the 'Intervention' treatment)</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>hapin <span class="ot">&lt;-</span> <span class="fu">mutate</span>(hapin, <span class="at">fueltype =</span> <span class="fu">case_when</span>(</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">endsWith</span>(concatenated, <span class="st">"BL"</span>) <span class="sc">~</span> <span class="st">"Biomass"</span>, <span class="co">#BL corresponds to the baseline, where all the participants had a biomass type fuel stove</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">endsWith</span>(concatenated, <span class="st">"R P1"</span>) <span class="sc">~</span> <span class="st">"Biomass"</span>,</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">endsWith</span>(concatenated, <span class="st">"R P2"</span>) <span class="sc">~</span> <span class="st">"Biomass"</span>,</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">endsWith</span>(concatenated, <span class="st">"Q P1"</span>) <span class="sc">~</span> <span class="st">"LPG"</span>,</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">endsWith</span>(concatenated, <span class="st">"Q P2"</span>) <span class="sc">~</span> <span class="st">"LPG"</span>,</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">endsWith</span>(concatenated, <span class="st">"R BLP1"</span>) <span class="sc">~</span> <span class="st">"Biomass"</span>,</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">endsWith</span>(concatenated, <span class="st">"R P1P2"</span>) <span class="sc">~</span> <span class="st">"Biomass"</span>,</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">endsWith</span>(concatenated, <span class="st">"R P2B1"</span>) <span class="sc">~</span> <span class="st">"Biomass"</span>,</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">endsWith</span>(concatenated, <span class="st">"Q BLP1"</span>) <span class="sc">~</span> <span class="st">"LPG"</span>,</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">endsWith</span>(concatenated, <span class="st">"Q P1P2"</span>) <span class="sc">~</span> <span class="st">"LPG"</span>,</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">endsWith</span>(concatenated, <span class="st">"Q P2B1"</span>) <span class="sc">~</span> <span class="st">"LPG"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>And now I will rename some of the variables and delete unnecessary ones. I will also recode the values from the newly named <code>arm</code> variable.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>hapin <span class="ot">&lt;-</span> hapin <span class="sc">%&gt;%</span> <span class="fu">rename</span>(<span class="at">filter_id =</span> <span class="st">"h41_m_ecm_fid"</span>, <span class="at">dup1_filterid =</span> <span class="st">"h41b_filter1"</span>, <span class="at">dup2_filterid =</span> <span class="st">"h41b_filter2"</span>,</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>                         <span class="at">blank_filterid =</span> <span class="st">"h41_b_ecm_fid"</span>, <span class="at">arm =</span> <span class="st">"trt_blinded"</span>, <span class="at">pm25 =</span> <span class="st">"ECM_grav_neph_conc_M"</span>,</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>                         <span class="at">bc =</span> <span class="st">"ECM_bc_conc_M"</span>, <span class="at">co =</span> <span class="st">"CO_avg_ppm_M"</span>, <span class="at">stove =</span> <span class="st">"h42_cook"</span>, <span class="at">smoke =</span> <span class="st">"h42_smoke"</span>,</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>                         <span class="at">coil =</span> <span class="st">"h42_coil"</span>, <span class="at">trash =</span> <span class="st">"h42_trash"</span>, <span class="at">kerosene =</span> <span class="st">"h42_kero"</span>, <span class="at">incense =</span> <span class="st">"h42_incence"</span>,                                   <span class="at">generator =</span> <span class="st">"h42_generator"</span>, <span class="at">smoky =</span> <span class="st">"h42_smoked"</span>, <span class="at">crop =</span> <span class="st">"h42_crop"</span>, <span class="at">stove_other =</span> <span class="st">"h42_smoky_kitc"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(concatenated, timepoint)) <span class="sc">%&gt;%</span> </span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">arm =</span> <span class="fu">case_when</span>(arm <span class="sc">==</span> <span class="st">'R'</span> <span class="sc">~</span> <span class="st">'Control'</span>, arm <span class="sc">==</span> <span class="st">'Q'</span> <span class="sc">~</span> <span class="st">'Intervention'</span>, <span class="cn">TRUE</span> <span class="sc">~</span> arm))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Then, I will create four dataframes, one for the personal filters, other two for the duplicates and another one for the blank filters. I will also remove the unnecessary columns from these dataframes.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Creating the dataframe for personal sample filters, and deleting the other columns with unnecessary filter IDs</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>hapin_personal <span class="ot">&lt;-</span> hapin <span class="sc">%&gt;%</span> <span class="fu">filter</span>(filter_id <span class="sc">%in%</span> xrflist<span class="sc">$</span>filter_id) <span class="sc">%&gt;%</span> </span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(blank_filterid, dup1_filterid, dup2_filterid))</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="co">#Creating the dataframe for duplicates in column 4, and deleting the other columns with unnecessary filter IDs, and renaming `dup1_filterid` to `filter_id`.</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>hapin_dup1 <span class="ot">&lt;-</span> hapin <span class="sc">%&gt;%</span> <span class="fu">filter</span>(dup1_filterid <span class="sc">%in%</span> xrflist<span class="sc">$</span>filter_id) <span class="sc">%&gt;%</span> </span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(blank_filterid, filter_id, dup2_filterid)) <span class="sc">%&gt;%</span> </span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">filter_id =</span> <span class="st">"dup1_filterid"</span>)</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="co">#Creating the dataframe for duplicates in column 5, and deleting the other columns with unnecessary filter IDs, and renaming `dup2_filterid` to `filter_id`.</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>hapin_dup2 <span class="ot">&lt;-</span> hapin <span class="sc">%&gt;%</span> <span class="fu">filter</span>(dup2_filterid <span class="sc">%in%</span> xrflist<span class="sc">$</span>filter_id) <span class="sc">%&gt;%</span> </span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(blank_filterid, filter_id, dup1_filterid)) <span class="sc">%&gt;%</span> </span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">filter_id =</span> <span class="st">"dup2_filterid"</span>)</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a><span class="co">#Creating the dataframe for blank filters, and deleting the other columns with unnecessary filter IDs, and renaming `blank_filterid` to `filter_id`.</span></span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>hapin_blanks <span class="ot">&lt;-</span> hapin <span class="sc">%&gt;%</span> <span class="fu">filter</span>(blank_filterid <span class="sc">%in%</span> xrflist<span class="sc">$</span>filter_id) <span class="sc">%&gt;%</span> </span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(filter_id, dup1_filterid, dup2_filterid)) <span class="sc">%&gt;%</span> </span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">filter_id =</span> <span class="st">"blank_filterid"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>And now I will combine the personal and duplicates dataframes into a single one named <code>hapin_filters</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Combining the `personal` and `dup` dataframes into a single one, using `bind_rows()`</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>hapin_filters <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(hapin_personal, hapin_dup1, hapin_dup2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Both the personal exposure sample and the blank dataframes are ready to be used for further analysis, so I saved them in RDS format.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(hapin_filters, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"processed-data"</span>, <span class="st">"hapin_samples.rds"</span>))</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(hapin_blanks, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"processed-data"</span>, <span class="st">"hapin_blanks.rds"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="elemental-species-concentrations-data-cleaning" class="level2">
+<h2 class="anchored" data-anchor-id="elemental-species-concentrations-data-cleaning">Elemental species Concentrations data cleaning</h2>
+<p>The following sections will be long, but necessary to demonstrate how to clean all the data and make all the adjustments before getting the final data for analysis. First I will load the file with the elemental species concentrations, assigned to the <code>concentration</code> dataframe. I will also load the limit of detection values from all elemental species under the <code>lod</code> dataframe.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Loading the elemental species concentration data</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>concentration <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"raw-data"</span>, <span class="st">"conc_unc_hapingt_emollinedo.xlsx"</span>), <span class="at">sheet =</span> <span class="st">"Concentration"</span>)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="co">#Loading the elemental species limit of detection values</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>lod <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"raw-data"</span>, <span class="st">"conc_unc_hapingt_emollinedo.xlsx"</span>), <span class="at">sheet =</span> <span class="st">"DL"</span>)</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="co">#having a glimpse of this dataframe</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(concentration)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 648
+Columns: 26
+$ Filter &lt;chr&gt; "3M53155", "3M53146", "3M53145", "3M53144", "3M53129", "3M53137…
+$ Type   &lt;chr&gt; "Personal sample", "Personal sample", "Personal sample", "Perso…
+$ Mg     &lt;chr&gt; "5.0500000000000003E-2", "7.6399999999999996E-2", "0.2369999999…
+$ Al     &lt;dbl&gt; 0.2664, 0.3422, 0.7431, 0.9458, 0.6668, 0.8040, 0.8879, 1.4259,…
+$ Si     &lt;chr&gt; "0.38869999999999999", "0.66539999999999999", "1.96459999999999…
+$ S      &lt;dbl&gt; 0.14694, 0.28000, 0.23270, 0.21852, 0.32850, 0.27250, 0.24223, …
+$ K      &lt;chr&gt; "0.1278", "1.03", "0.66180000000000005", "0.29330000000000001",…
+$ Ca     &lt;chr&gt; "7.8299999999999995E-2", "0.29089999999999999", "0.3604", "0.31…
+$ Ti     &lt;chr&gt; "2.9000000000000001E-2", "1.89E-2", "5.04E-2", "7.4399999999999…
+$ Cr     &lt;chr&gt; "0", "[0.0014]", "[0.0022]", "[0.0007]", "[0.0007]", "[0.0014]"…
+$ Mn     &lt;chr&gt; "9.4999999999999998E-3", "1.03E-2", "1.9800000000000002E-2", "2…
+$ Fe     &lt;chr&gt; "0.15490000000000001", "0.21199999999999999", "0.45700000000000…
+$ Ni     &lt;chr&gt; "[0.0007]", "0", "[0.0015]", "3.3999999999999998E-3", "[0.0030]…
+$ Cu     &lt;chr&gt; "1.2999999999999999E-2", "0", "0", "1.09E-2", "1.73999999999999…
+$ Zn     &lt;chr&gt; "[0.0070]", "[0.0100]", "[0.0100]", "8.9999999999999993E-3", "2…
+$ Ga     &lt;chr&gt; "[0.0033]", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "…
+$ As     &lt;chr&gt; "0", "0", "0", "[0.0040]", "0", "0", "[0.0024]", "0", "[0.0016]…
+$ Se     &lt;chr&gt; "0", "0", "[0.0008]", "[0.0008]", "0", "0", "7.7000000000000002…
+$ Cd     &lt;chr&gt; "0", "0", "[0.03]", "0", "[0.03]", "0", "0", "[0.03]", "[0.12]"…
+$ In     &lt;chr&gt; "[0.05]", "[0.13]", "0", "0", "[0.17]", "[0.13]", "0", "0", "0"…
+$ Sn     &lt;chr&gt; "[0.05]", "[0.11]", "[0.06]", "[0.01]", "[0.05]", "[0.05]", "0"…
+$ Te     &lt;chr&gt; "[0.23]", "0", "[0.23]", "0", "0", "[0.87]", "0", "0", "[0.39]"…
+$ I      &lt;chr&gt; "0", "0", "0", "0", "[0.84]", "0", "[0.22]", "[0.28]", "0", "0"…
+$ Pb     &lt;chr&gt; "[0.0064]", "0", "0", "0", "[0.0032]", "0", "0", "0", "0", "0",…
+$ Cl     &lt;chr&gt; "4.4499999999999998E-2", "0.84099999999999997", "0.726999999999…
+$ Na     &lt;chr&gt; "7.2499999999999995E-2", "0.1002", "0.22720000000000001", "0.23…</code></pre>
+</div>
+</div>
+<p>First things first, some of the observations contain brackets, which represent values below the detection limit and they have to be corrected in future steps. So first, here I will delete the brackets, then I will convert these variables to numeric type and round them to 4 decimal digits.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Remove brackets, convert to numeric, and round to 4 decimal places</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>concentration <span class="ot">&lt;-</span> concentration <span class="sc">%&gt;%</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="dv">3</span><span class="sc">:</span><span class="dv">26</span>, <span class="sc">~</span> <span class="fu">round</span>(<span class="fu">as.numeric</span>(<span class="fu">str_remove_all</span>(., <span class="st">"</span><span class="sc">\\</span><span class="st">[|</span><span class="sc">\\</span><span class="st">]"</span>)), <span class="dv">4</span>))) <span class="sc">%&gt;%</span> </span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">filter_id =</span> <span class="st">"Filter"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Now, I will remove the filters that correspond to field blanks, since those will be used to adjust the sample filters. I will create a new data frame <code>blanks</code>, that contains those observations.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Create dataframe with the concentrations for the blank filters for each element</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>blanks <span class="ot">&lt;-</span> concentration <span class="sc">%&gt;%</span> <span class="fu">filter</span>(filter_id <span class="sc">%in%</span> hapin_blanks<span class="sc">$</span>filter_id) <span class="sc">%&gt;%</span> </span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(filter_id, Type))</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="co">#Remove blank filters from the `concentration` dataframe</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>concentration <span class="ot">&lt;-</span> concentration <span class="sc">%&gt;%</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">anti_join</span>(hapin_blanks, <span class="at">by =</span> <span class="st">"filter_id"</span>)</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a><span class="co">#Calculate the median for each element, using the blank filter values</span></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>median_blanks <span class="ot">&lt;-</span> blanks <span class="sc">%&gt;%</span> <span class="fu">select</span>(Mg<span class="sc">:</span> Na) <span class="sc">%&gt;%</span></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map_dbl</span>(median) <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">4</span>)</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>median_blanks</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    Mg     Al     Si      S      K     Ca     Ti     Cr     Mn     Fe     Ni 
+0.0112 0.0000 0.0000 0.0044 0.0014 0.0048 0.0000 0.0000 0.0000 0.0038 0.0000 
+    Cu     Zn     Ga     As     Se     Cd     In     Sn     Te      I     Pb 
+0.0043 0.0045 0.0000 0.0000 0.0000 0.0000 0.0000 0.0050 0.0200 0.1000 0.0000 
+    Cl     Na 
+0.0000 0.0135 </code></pre>
+</div>
+</div>
+<p>Now, I will estimate which elemental species are representative, by filtering all the species with less than 50% of their values are below the detection limit.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Round the limit of detection values to 4 decimal places</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>lod <span class="ot">&lt;-</span> lod <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="st">`</span><span class="at">Concentration (ug/cm2)</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">round</span>(<span class="st">`</span><span class="at">Concentration (ug/cm2)</span><span class="st">`</span>, <span class="dv">4</span>))</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(lod)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 22 × 2
+   Species `Concentration (ug/cm2)`
+   &lt;chr&gt;                      &lt;dbl&gt;
+ 1 Mg                        0.0051
+ 2 Al                        0.0059
+ 3 Si                        0.0068
+ 4 S                         0.0026
+ 5 K                         0.0016
+ 6 Ca                        0.004 
+ 7 Ti                        0.0086
+ 8 Cr                        0.0055
+ 9 Mn                        0.003 
+10 Fe                        0.0043
+# ℹ 12 more rows</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Estimate the percentage of values below detection limit for each element</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>bdl <span class="ot">&lt;-</span> concentration <span class="sc">%&gt;%</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">percent_bdl_mg =</span> <span class="fu">sum</span>(Mg <span class="sc">&lt;</span> <span class="fl">0.0051</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">percent_bdl_al =</span> <span class="fu">sum</span>(Al <span class="sc">&lt;</span> <span class="fl">0.0059</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">percent_bdl_si =</span> <span class="fu">sum</span>(Si <span class="sc">&lt;</span> <span class="fl">0.0068</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">percent_bdl_s =</span> <span class="fu">sum</span>(S <span class="sc">&lt;</span> <span class="fl">0.0026</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">percent_bdl_k =</span> <span class="fu">sum</span>(K <span class="sc">&lt;</span> <span class="fl">0.0040</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">percent_bdl_ca =</span> <span class="fu">sum</span>(Ca <span class="sc">&lt;</span> <span class="fl">0.0040</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">percent_bdl_ti =</span> <span class="fu">sum</span>(Ti <span class="sc">&lt;</span> <span class="fl">0.0086</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">percent_bdl_cr =</span> <span class="fu">sum</span>(Cr <span class="sc">&lt;</span> <span class="fl">0.0055</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">percent_bdl_mn =</span> <span class="fu">sum</span>(Mn <span class="sc">&lt;</span> <span class="fl">0.0030</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">percent_bdl_fe =</span> <span class="fu">sum</span>(Fe <span class="sc">&lt;</span> <span class="fl">0.0043</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">percent_bdl_ni =</span> <span class="fu">sum</span>(Ni <span class="sc">&lt;</span> <span class="fl">0.0043</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">percent_bdl_cu =</span> <span class="fu">sum</span>(Cu <span class="sc">&lt;</span> <span class="fl">0.0080</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">percent_bdl_zn =</span> <span class="fu">sum</span>(Zn <span class="sc">&lt;</span> <span class="fl">0.0024</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">percent_bdl_ga =</span> <span class="fu">sum</span>(Ga <span class="sc">&lt;</span> <span class="fl">0.0049</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">percent_bdl_as =</span> <span class="fu">sum</span>(As <span class="sc">&lt;</span> <span class="fl">0.0062</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">percent_bdl_se =</span> <span class="fu">sum</span>(Se <span class="sc">&lt;</span> <span class="fl">0.0181</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">percent_bdl_cd =</span> <span class="fu">sum</span>(Cd <span class="sc">&lt;</span> <span class="fl">0.0932</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">percent_bdl_in =</span> <span class="fu">sum</span>(In <span class="sc">&lt;</span> <span class="fl">0.1089</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">percent_bdl_sn =</span> <span class="fu">sum</span>(Sn <span class="sc">&lt;</span> <span class="fl">0.1844</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb25-23"><a href="#cb25-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">percent_bdl_te =</span> <span class="fu">sum</span>(Te <span class="sc">&lt;</span> <span class="fl">0.2166</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb25-24"><a href="#cb25-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">percent_bdl_i =</span> <span class="fu">sum</span>(I <span class="sc">&lt;</span> <span class="fl">0.3149</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>,</span>
+<span id="cb25-25"><a href="#cb25-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">percent_bdl_pb =</span> <span class="fu">sum</span>(Pb <span class="sc">&lt;</span> <span class="fl">0.0324</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>,)</span>
+<span id="cb25-26"><a href="#cb25-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-27"><a href="#cb25-27" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(bdl)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 22
+  percent_bdl_mg percent_bdl_al percent_bdl_si percent_bdl_s percent_bdl_k
+           &lt;dbl&gt;          &lt;dbl&gt;          &lt;dbl&gt;         &lt;dbl&gt;         &lt;dbl&gt;
+1          0.317           3.17           8.57         0.159         0.317
+# ℹ 17 more variables: percent_bdl_ca &lt;dbl&gt;, percent_bdl_ti &lt;dbl&gt;,
+#   percent_bdl_cr &lt;dbl&gt;, percent_bdl_mn &lt;dbl&gt;, percent_bdl_fe &lt;dbl&gt;,
+#   percent_bdl_ni &lt;dbl&gt;, percent_bdl_cu &lt;dbl&gt;, percent_bdl_zn &lt;dbl&gt;,
+#   percent_bdl_ga &lt;dbl&gt;, percent_bdl_as &lt;dbl&gt;, percent_bdl_se &lt;dbl&gt;,
+#   percent_bdl_cd &lt;dbl&gt;, percent_bdl_in &lt;dbl&gt;, percent_bdl_sn &lt;dbl&gt;,
+#   percent_bdl_te &lt;dbl&gt;, percent_bdl_i &lt;dbl&gt;, percent_bdl_pb &lt;dbl&gt;</code></pre>
+</div>
+</div>
+<p>Only 10 elements have less than 50% of their observations below the detection limit. A note: Na and Cl were seen in high and very variable concentrations, so those elements will also be removed from the analysis. Now, I will filter the remaining elements (variables).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Select only the filter ID, type and the 10 elements that have more than 50% of their data not below the detection limit</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>concentration <span class="ot">&lt;-</span> concentration <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="fu">c</span>(filter_id, Type, Mg, Al, Si, S, K, Ca, Ti, Mn, Fe, Zn)) <span class="sc">%&gt;%</span> </span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(filter_id) <span class="co">#Also I decided to arrange them ascending based on the filter_id</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Now, blank adjusting all the values, by substracting the median value for each element, obtained from the blank filters. Also, replace all values below the detection limit with (DL/sqrt(2).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Substract the median blank value for the elements that need blank adjustment</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>concentration <span class="ot">&lt;-</span> concentration <span class="sc">%&gt;%</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Mg =</span> Mg <span class="sc">-</span> <span class="fl">0.0112</span>, <span class="at">S =</span> S <span class="sc">-</span> <span class="fl">0.0044</span>, <span class="at">K =</span> K <span class="sc">-</span> <span class="fl">0.0014</span>, <span class="at">Ca =</span> Ca <span class="sc">-</span> <span class="fl">0.0048</span>, <span class="at">Fe =</span> Fe <span class="sc">-</span> <span class="fl">0.0038</span>, <span class="at">Zn =</span> Zn <span class="sc">-</span> <span class="fl">0.0045</span>)</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a><span class="co">#Replace all values below the detection limit with DL/sqrt(2)</span></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>concentration <span class="ot">&lt;-</span> concentration <span class="sc">%&gt;%</span> </span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">Mg =</span> <span class="fu">round</span>(<span class="fu">if_else</span>(Mg <span class="sc">&lt;</span> <span class="fl">0.0051</span>, <span class="fl">0.0051</span> <span class="sc">/</span> <span class="fu">sqrt</span>(<span class="dv">2</span>), Mg), <span class="dv">4</span>), <span class="at">Al =</span> <span class="fu">round</span>(<span class="fu">if_else</span>(Al <span class="sc">&lt;</span> <span class="fl">0.0059</span>, <span class="fl">0.0059</span> <span class="sc">/</span> <span class="fu">sqrt</span>(<span class="dv">2</span>), Al), <span class="dv">4</span>),</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>           <span class="at">Si =</span> <span class="fu">round</span>(<span class="fu">if_else</span>(Si <span class="sc">&lt;</span> <span class="fl">0.0068</span>, <span class="fl">0.0068</span> <span class="sc">/</span> <span class="fu">sqrt</span>(<span class="dv">2</span>), Si), <span class="dv">4</span>), <span class="at">S =</span> <span class="fu">round</span>(<span class="fu">if_else</span>(S <span class="sc">&lt;</span> <span class="fl">0.0026</span>, <span class="fl">0.0026</span> <span class="sc">/</span> <span class="fu">sqrt</span>(<span class="dv">2</span>), S), <span class="dv">4</span>),</span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>           <span class="at">K =</span> <span class="fu">round</span>(<span class="fu">if_else</span>(K <span class="sc">&lt;</span> <span class="fl">0.0016</span>, <span class="fl">0.0016</span> <span class="sc">/</span> <span class="fu">sqrt</span>(<span class="dv">2</span>), K), <span class="dv">4</span>), <span class="at">Ca =</span> <span class="fu">round</span>(<span class="fu">if_else</span>(Ca <span class="sc">&lt;</span> <span class="fl">0.0040</span>, <span class="fl">0.0040</span> <span class="sc">/</span> <span class="fu">sqrt</span>(<span class="dv">2</span>), Ca), <span class="dv">4</span>),</span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>           <span class="at">Ti =</span> <span class="fu">round</span>(<span class="fu">if_else</span>(Ti <span class="sc">&lt;</span> <span class="fl">0.0086</span>, <span class="fl">0.0086</span> <span class="sc">/</span> <span class="fu">sqrt</span>(<span class="dv">2</span>), Ti), <span class="dv">4</span>), <span class="at">Mn =</span> <span class="fu">round</span>(<span class="fu">if_else</span>(Mn <span class="sc">&lt;</span> <span class="fl">0.0030</span>, <span class="fl">0.0030</span> <span class="sc">/</span> <span class="fu">sqrt</span>(<span class="dv">2</span>), Mn), <span class="dv">4</span>),</span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>           <span class="at">Fe =</span> <span class="fu">round</span>(<span class="fu">if_else</span>(Fe <span class="sc">&lt;</span> <span class="fl">0.0043</span>, <span class="fl">0.0043</span> <span class="sc">/</span> <span class="fu">sqrt</span>(<span class="dv">2</span>), Fe), <span class="dv">4</span>), <span class="at">Zn =</span> <span class="fu">round</span>(<span class="fu">if_else</span>(Zn <span class="sc">&lt;</span> <span class="fl">0.0024</span>, <span class="fl">0.0024</span> <span class="sc">/</span> <span class="fu">sqrt</span>(<span class="dv">2</span>), Zn), <span class="dv">4</span>))</span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a><span class="co">#I will save these concentrations in a new dataframe `concentrations_ugcm2` that will be used for uncertainty estimations in future steps</span></span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>concentrations_ugcm2 <span class="ot">&lt;-</span> concentration <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>Type)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>And then, converting the concentrations from micrograms per square centimeter to micrograms per cubic meter using the equation: ug/m3 = (Concentration (ug/cm2) x Filter area (cm2))/Sample volume (m3). Where, the filter area is 0.7853 cm2 and the sample volume is 0.43 m3. Also, I need to input the BC concentrations from the <code>hapin_filters</code> dataframe.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Converting the concentrations from (ug/cm2) to (ug/m3)</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>concentration <span class="ot">&lt;-</span> concentration <span class="sc">%&gt;%</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(Mg<span class="sc">:</span>Zn, <span class="sc">~</span> <span class="fu">round</span>(.x <span class="sc">*</span> <span class="fl">0.7853</span> <span class="sc">/</span> <span class="fl">0.43</span>, <span class="dv">4</span>)))</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a><span class="co">#Now adding the BC concentrations value from the `hapin_filters` df</span></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>hapin_filters <span class="ot">&lt;-</span> hapin_filters <span class="sc">%&gt;%</span> <span class="fu">arrange</span>(filter_id) <span class="co">#First arrange in ascending order by filter_id</span></span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>concentration <span class="ot">&lt;-</span> <span class="fu">bind_cols</span>(concentration, hapin_filters<span class="sc">$</span>bc) <span class="sc">%&gt;%</span> <span class="fu">rename</span>(<span class="at">BC =</span> <span class="st">"...13"</span>) <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>Type) <span class="co">#Join the BC concentrations to the `concentrations` df, also renaming the column to "BC" and deleting the 'Type' column</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>New names:
+• `` -&gt; `...13`</code></pre>
+</div>
+</div>
+<p>I will add the fueltype and arm variables to this dataframe, and then I’ll save it in RDS format.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Add the `arm` and `fueltype` variables to the `concentration` dataframe</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>concentration <span class="ot">&lt;-</span> concentration <span class="sc">%&gt;%</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">arm =</span> hapin_filters<span class="sc">$</span>arm, <span class="at">fueltype =</span> hapin_filters<span class="sc">$</span>fueltype)</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a><span class="co">#Save this dataframe as RDS file</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(concentration, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"processed-data"</span>, <span class="st">"concentration.rds"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="elemental-species-uncertainties-data-processing" class="level2">
+<h2 class="anchored" data-anchor-id="elemental-species-uncertainties-data-processing">Elemental species Uncertainties data processing</h2>
+<p>Now, it’s time to make some adjustments to the uncertainties from all filters across all elemental species. First, loading the uncertainties data to the <code>uncertainty</code> data frame.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>uncertainty <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"raw-data"</span>, <span class="st">"conc_unc_hapingt_emollinedo.xlsx"</span>), <span class="at">sheet =</span> <span class="st">"Uncertainty"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>First, I will remove the elemental species with more than 50% of their values below detection limit, also remove the blank filter observations, sort by Filter ID and round the values to numbers with four decimal places.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>uncertainty <span class="ot">&lt;-</span> uncertainty <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="fu">c</span>(Filter, Mg, Al, Si, S, K, Ca, Ti, Mn, Fe, Zn)) <span class="sc">%&gt;%</span> <span class="co">#Select only the necessary variables</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">filter_id =</span> <span class="st">"Filter"</span>) <span class="sc">%&gt;%</span> <span class="co">#Rename the Filter column</span></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_at</span>(<span class="fu">vars</span>(Mg<span class="sc">:</span>Zn), <span class="sc">~</span> <span class="fu">round</span>(., <span class="dv">4</span>)) <span class="sc">%&gt;%</span> <span class="co">#Round the uncertainties to 4 decimal places</span></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(filter_id) <span class="sc">%&gt;%</span> <span class="co">#Arrange observations based on Filter ID</span></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">anti_join</span>(hapin_blanks, <span class="at">by =</span> <span class="st">"filter_id"</span>) <span class="co">#Remove blank filters</span></span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a><span class="co">#Have a glimpse of the data</span></span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(uncertainty)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 630
+Columns: 11
+$ filter_id &lt;chr&gt; "3M50038", "3M50039", "3M50040", "3M50046", "3M50080", "3M50…
+$ Mg        &lt;dbl&gt; 0.0021, 0.0026, 0.0029, 0.0033, 0.0027, 0.0022, 0.0028, 0.00…
+$ Al        &lt;dbl&gt; 0.0026, 0.0030, 0.0000, 0.0043, 0.0031, 0.0000, 0.0000, 0.00…
+$ Si        &lt;dbl&gt; 0.0000, 0.0026, 0.0026, 0.0036, 0.0030, 0.0000, 0.0024, 0.00…
+$ S         &lt;dbl&gt; 0.0006, 0.0008, 0.0010, 0.0008, 0.0010, 0.0007, 0.0008, 0.00…
+$ K         &lt;dbl&gt; 0.0052, 0.0086, 0.0120, 0.0110, 0.0078, 0.0078, 0.0120, 0.01…
+$ Ca        &lt;dbl&gt; 0.0038, 0.0068, 0.0074, 0.0069, 0.0083, 0.0038, 0.0061, 0.00…
+$ Ti        &lt;dbl&gt; 0.0021, 0.0051, 0.0045, 0.0076, 0.0041, 0.0017, 0.0030, 0.00…
+$ Mn        &lt;dbl&gt; 0.0016, 0.0030, 0.0023, 0.0041, 0.0019, 0.0017, 0.0026, 0.00…
+$ Fe        &lt;dbl&gt; 0.0055, 0.0081, 0.0065, 0.0150, 0.0066, 0.0041, 0.0067, 0.01…
+$ Zn        &lt;dbl&gt; 0.0000, 0.0048, 0.0041, 0.0044, 0.0043, 0.0050, 0.0040, 0.00…</code></pre>
+</div>
+</div>
+<p>Now, the uncertainties from the concentration values that were LOD adjusted have to be reestimated to (5/6)*LOD. To do this I created a list that inputs the LOD values for each element, and then using <code>mutate()</code>, I make the changes only to the values that follow the specified condition.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Create a list for the detection limits for each element</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>dl <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="at">Mg =</span> <span class="fl">0.0051</span>, <span class="at">Al =</span> <span class="fl">0.0059</span>, <span class="at">Si =</span> <span class="fl">0.0068</span>, <span class="at">S =</span> <span class="fl">0.0026</span>, <span class="at">K =</span> <span class="fl">0.0016</span>, </span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>        <span class="at">Ca =</span> <span class="fl">0.0040</span>, <span class="at">Ti =</span> <span class="fl">0.0086</span>, <span class="at">Mn =</span> <span class="fl">0.0030</span>, <span class="at">Fe =</span> <span class="fl">0.0043</span>, <span class="at">Zn =</span> <span class="fl">0.0024</span>)</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Recalculate the values in df based on the conditions</span></span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>uncertainty <span class="ot">&lt;-</span> uncertainty <span class="sc">%&gt;%</span></span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">all_of</span>(<span class="fu">names</span>(dl)),</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>                <span class="sc">~</span> <span class="fu">round</span>(<span class="fu">if_else</span>(concentrations_ugcm2[[<span class="fu">cur_column</span>()]] <span class="sc">&lt;</span> dl[[<span class="fu">cur_column</span>()]], (<span class="dv">5</span><span class="sc">/</span><span class="dv">6</span>) <span class="sc">*</span> dl[[<span class="fu">cur_column</span>()]], .), <span class="dv">4</span>),</span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>                <span class="at">.names =</span> <span class="st">"{.col}"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Finally, for all the elemental species, the uncertainties have to be reestimated so they correctly reflect the uncertainty for each variable used in the calculations. In this case, input the XRF-estimated concentration, filter area and filter volume uncertainties using the law of propagation of uncertainties. Also, the purpose of this section is to convert the uncertainties from ug/cm2 to ug/m3 to correctly reflect the units of the concentrations.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define the variables to be recalculated</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>variables <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">'Mg'</span>, <span class="st">'Al'</span>, <span class="st">'Si'</span>, <span class="st">'S'</span>, <span class="st">'K'</span>, <span class="st">'Ca'</span>, <span class="st">'Ti'</span>, <span class="st">'Mn'</span>, <span class="st">'Fe'</span>, <span class="st">'Zn'</span>)</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Recalculate the values using the given equation</span></span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>uncertainty <span class="ot">&lt;-</span> uncertainty <span class="sc">%&gt;%</span></span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">all_of</span>(variables), <span class="sc">~</span> <span class="fu">round</span>( <span class="co">#Here, selecting all the variables to be re-calculated</span></span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sqrt</span>((<span class="fl">0.7853</span><span class="sc">/</span><span class="fl">0.43</span>)<span class="sc">^</span><span class="dv">2</span> <span class="sc">*</span> .<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> (concentrations_ugcm2[[<span class="fu">cur_column</span>()]]<span class="sc">/</span><span class="fl">0.43</span>)<span class="sc">^</span><span class="dv">2</span> <span class="sc">*</span> <span class="fl">0.05</span><span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> (<span class="sc">-</span>concentrations_ugcm2[[<span class="fu">cur_column</span>()]]<span class="sc">*</span><span class="fl">0.7853</span><span class="sc">/</span><span class="fl">0.43</span><span class="sc">^</span><span class="dv">2</span>)<span class="sc">^</span><span class="dv">2</span> <span class="sc">*</span> (<span class="fl">0.05</span> <span class="sc">*</span> <span class="fl">0.43</span>)<span class="sc">^</span><span class="dv">2</span>), <span class="dv">4</span>), <span class="at">.names =</span> <span class="st">"{.col}"</span>)) <span class="co">#Input the equation</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Since the BC concentrations will also be included, I need to estimate the BC uncertainties. These estimations require an additional file that will be assigned to the <code>atn</code> dataframe.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Load file to estimate BC uncertainties</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>atn <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"raw-data"</span>, <span class="st">"ATN_summary_SA.csv"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Rows: 630 Columns: 3
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr (1): filter_id
+dbl (2): pre_ATN, post_ATN
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Explore the structure of the file</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="fu">glimpse</span>(atn)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Rows: 630
+Columns: 3
+$ filter_id &lt;chr&gt; "3M50038", "3M50039", "3M50040", "3M50046", "3M50080", "3M50…
+$ pre_ATN   &lt;dbl&gt; 0.15, 9.88, 1.33, 3.64, 2.27, 7.25, 0.49, 1.90, 2.29, 2.38, …
+$ post_ATN  &lt;dbl&gt; 15.57, 45.88, 380.52, 40.72, 42.08, 35.34, 70.12, 1.59, 40.6…</code></pre>
+</div>
+</div>
+<p>To estimate the BC concentrations, I used an instrument called Sootscan, that calculates transmissometry as attenuation before (pre) and after (post) sampling the filters. These values summarize the pre- and post- ATN values for all the filters, but I have to estimate the total attenuation for all sample filters with the equation: LogN(post-ATN/pre-ATN)*100.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Estimate total attenuation by sample</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>atn <span class="ot">&lt;-</span> atn <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">ATN =</span> <span class="fu">round</span>(<span class="fu">log</span>(post_ATN<span class="sc">/</span>pre_ATN) <span class="sc">*</span><span class="dv">100</span>, <span class="dv">2</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>And finally, estimate the BC uncertainties using an equation also derived from the lag of propagation of uncertainties.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Estimate the BC uncertainties</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>uncertainty <span class="ot">&lt;-</span> uncertainty <span class="sc">%&gt;%</span> </span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">BC =</span> <span class="fu">round</span>((<span class="dv">1370</span> <span class="sc">*</span> <span class="fu">sqrt</span>((atn<span class="sc">$</span>ATN)<span class="sc">^</span><span class="dv">2</span> <span class="sc">*</span> <span class="fl">0.000005</span><span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> <span class="fl">0.000079</span><span class="sc">^</span><span class="dv">2</span> <span class="sc">*</span> <span class="fl">1.16</span><span class="sc">^</span><span class="dv">2</span>)), <span class="dv">4</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>I will also add the arm and fueltype variables to this dataframe, and I’ll save it as RDS format.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Add the `arm` and `fueltype` variables to the `uncertainty` dataframe</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>uncertainty <span class="ot">&lt;-</span> uncertainty <span class="sc">%&gt;%</span></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">arm =</span> hapin_filters<span class="sc">$</span>arm, <span class="at">fueltype =</span> hapin_filters<span class="sc">$</span>fueltype)</span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a><span class="co">#Save this dataframe as RDS file</span></span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(uncertainty, <span class="at">file =</span> <span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"processed-data"</span>, <span class="st">"uncertainty.rds"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      return note.innerHTML;
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

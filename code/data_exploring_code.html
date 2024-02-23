@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.4.537">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Erick E. Mollinedo">
+<meta name="dcterms.date" content="2024-02-22">
+
+<title>Project Data Exploring</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="data_exploring_code_files/libs/clipboard/clipboard.min.js"></script>
+<script src="data_exploring_code_files/libs/quarto-html/quarto.js"></script>
+<script src="data_exploring_code_files/libs/quarto-html/popper.min.js"></script>
+<script src="data_exploring_code_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="data_exploring_code_files/libs/quarto-html/anchor.min.js"></script>
+<link href="data_exploring_code_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="data_exploring_code_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="data_exploring_code_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="data_exploring_code_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="data_exploring_code_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Project Data Exploring</h1>
+<p class="subtitle lead">Project: Part 2</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Erick E. Mollinedo </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">February 22, 2024</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="concentrations" class="level2">
+<h2 class="anchored" data-anchor-id="concentrations">Concentrations</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Load packages to use</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>here() starts at C:/Users/molli/OneDrive/Documentos/UGA/Spring 2024/MADA/MOLLINEDO-MADA-project</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(vtable)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: kableExtra</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(corrplot)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>corrplot 0.92 loaded</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+✔ dplyr     1.1.3     ✔ purrr     1.0.2
+✔ forcats   1.0.0     ✔ stringr   1.5.0
+✔ ggplot2   3.4.4     ✔ tibble    3.2.1
+✔ lubridate 1.9.3     ✔ tidyr     1.3.0</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter()     masks stats::filter()
+✖ dplyr::group_rows() masks kableExtra::group_rows()
+✖ dplyr::lag()        masks stats::lag()
+ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(RColorBrewer)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(naniar)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Load the <code>concentration</code> file.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>concentration <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"processed-data"</span>, <span class="st">"concentration.rds"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>I will produce two boxplots, that summarize the concentrations categorized by <code>arm</code> and <code>fueltype</code>. First I will create a dataframe in longer format using <code>pivot_longer()</code>. Then creating the plots using <code>ggplot()</code>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Pivot longer the `concentration` df to make the boxplots</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>conc_longer <span class="ot">&lt;-</span> concentration <span class="sc">%&gt;%</span> <span class="co">#First a df with the `arm` variable</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="sc">-</span><span class="fu">c</span>(filter_id, fueltype, arm),</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>               <span class="at">names_to =</span> <span class="st">"species"</span>, <span class="at">values_to =</span> <span class="st">"concentration"</span>)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="co">#Creating the boxplot of concentrations by fueltype</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">scipen =</span> <span class="dv">999</span>) <span class="co">#to remove scientific notation for smaller values (i.e. changes from 1*10-3 to 0.001)</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(conc_longer)<span class="sc">+</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>(<span class="fu">aes</span>(<span class="at">x=</span> species, <span class="at">y=</span> concentration, <span class="at">fill=</span> fueltype))<span class="sc">+</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_brewer</span>(<span class="at">palette =</span> <span class="st">"Paired"</span>)<span class="sc">+</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x=</span> <span class="st">"Elemental species"</span>, <span class="at">y=</span> <span class="st">"Concentration (ug/m3)"</span>)<span class="sc">+</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>()<span class="sc">+</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">fill=</span> <span class="fu">guide_legend</span>(<span class="at">title=</span> <span class="st">"Fuel type"</span>))<span class="sc">+</span> <span class="co">#Change legend from fuel_type to Fuel type</span></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>(<span class="at">base_size =</span> <span class="dv">15</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Removed 1 rows containing non-finite values (`stat_boxplot()`).</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="data_exploring_code_files/figure-html/unnamed-chunk-3-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Creating the boxplot of concentrations by arm</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">scipen =</span> <span class="dv">999</span>) <span class="co">#to remove scientific notation for smaller values (i.e. changes from 1*10-3 to 0.001)</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(conc_longer)<span class="sc">+</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>(<span class="fu">aes</span>(<span class="at">x=</span> species, <span class="at">y=</span> concentration, <span class="at">fill=</span> arm))<span class="sc">+</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_brewer</span>(<span class="at">palette =</span> <span class="st">"Paired"</span>)<span class="sc">+</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x=</span> <span class="st">"Elemental species"</span>, <span class="at">y=</span> <span class="st">"Concentration (ug/m3)"</span>)<span class="sc">+</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>()<span class="sc">+</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">guides</span>(<span class="at">fill=</span> <span class="fu">guide_legend</span>(<span class="at">title=</span> <span class="st">"Study Arm"</span>))<span class="sc">+</span> <span class="co">#Change legend from fuel_type to Fuel type</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>(<span class="at">base_size =</span> <span class="dv">15</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Removed 1 rows containing non-finite values (`stat_boxplot()`).</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="data_exploring_code_files/figure-html/unnamed-chunk-3-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The boxplots for <code>fueltype</code> and <code>arm</code> show what I was expecting in terms of how the data is distributed. The concentrations seem higher in some elemental especies such as BC, Ca, K, Mg, Mn and S. The following steps will be to evaluate if those differences in concentrations are statistically different.</p>
+<p>Now I will create a correlation plot using the <code>corrplot()</code> function, to explore which elements could be more associated between each other.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co">#First, delete unnecessary variables to conduct the correlation test</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>cor <span class="ot">&lt;-</span> concentration <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span><span class="fu">c</span>(filter_id, fueltype, arm))</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="co">#Perform the spearman correlation test</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>cor <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">cor</span>(cor, <span class="at">method =</span> <span class="st">"pearson"</span>, <span class="at">use =</span> <span class="st">"complete.obs"</span>) <span class="co">#I had to input the `use=` argument since there are missing values in the BC variable. I will correct them later.</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="co">#Create the correlation plot</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="fu">corrplot</span>(cor, <span class="at">method =</span> <span class="st">"color"</span>, <span class="at">type =</span> <span class="st">"lower"</span>, <span class="co">#Color form and displays at the lower portion</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">col =</span> <span class="fu">COL2</span>(<span class="st">"RdYlBu"</span>, <span class="dv">20</span>), <span class="at">order =</span> <span class="st">"hclust"</span>, <span class="co">#Color palette, and order or the species</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>         <span class="at">tl.col =</span> <span class="st">"orangered4"</span>, <span class="at">tl.srt =</span> <span class="dv">0</span>, <span class="at">tl.cex =</span> <span class="fl">0.9</span>,  <span class="co">#Color of the axis, position and size</span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>         <span class="at">addCoef.col =</span> <span class="st">"gray10"</span>, <span class="at">number.font =</span> <span class="dv">2</span>, <span class="at">number.cex =</span> <span class="fl">0.8</span>, <span class="co">#Display correlation number, set the font and size</span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>         <span class="at">col.lim =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">1</span>), <span class="at">is.corr =</span> T) <span class="co">#Set the color limits at the bar</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="data_exploring_code_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The correlation plot above shows that Si and Fe are strongly correlated, which might suggest that these elements represent one specific source of pollution. Other high correlations observed are between Al and Si, and Fe and Ti.</p>
+</section>
+<section id="uncertainties" class="level2">
+<h2 class="anchored" data-anchor-id="uncertainties">Uncertainties</h2>
+<p>Load the <code>uncertainty</code> file.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>uncertainty <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"processed-data"</span>, <span class="st">"uncertainty.rds"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>I will produce a summary table of the uncertainties, using the <code>vtable</code> package.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Remove the `arm` variable</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>unc_fuel <span class="ot">&lt;-</span> uncertainty <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>arm)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="co">#Use the `sumtable()` function from the `vtable` package, which creates a table</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sumtable</span>(unc_fuel, <span class="at">group =</span> <span class="st">'fueltype'</span>, <span class="at">group.long =</span> T, <span class="at">add.median =</span> T, <span class="at">out =</span> <span class="st">'kable'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<caption>Summary Statistics</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;" data-quarto-table-cell-role="th">Variable</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">N</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">Mean</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">Std. Dev.</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">Min</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">Pctl. 25</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">Pctl. 50</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">Pctl. 75</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">Max</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">fueltype: Biomass</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Mg</td>
+<td style="text-align: left;">376</td>
+<td style="text-align: left;">0.013</td>
+<td style="text-align: left;">0.0072</td>
+<td style="text-align: left;">0.0037</td>
+<td style="text-align: left;">0.0081</td>
+<td style="text-align: left;">0.011</td>
+<td style="text-align: left;">0.016</td>
+<td style="text-align: left;">0.044</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Al</td>
+<td style="text-align: left;">376</td>
+<td style="text-align: left;">0.055</td>
+<td style="text-align: left;">0.037</td>
+<td style="text-align: left;">0.0058</td>
+<td style="text-align: left;">0.033</td>
+<td style="text-align: left;">0.048</td>
+<td style="text-align: left;">0.067</td>
+<td style="text-align: left;">0.21</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Si</td>
+<td style="text-align: left;">376</td>
+<td style="text-align: left;">0.074</td>
+<td style="text-align: left;">0.074</td>
+<td style="text-align: left;">0.0039</td>
+<td style="text-align: left;">0.019</td>
+<td style="text-align: left;">0.045</td>
+<td style="text-align: left;">0.11</td>
+<td style="text-align: left;">0.36</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">S</td>
+<td style="text-align: left;">376</td>
+<td style="text-align: left;">0.036</td>
+<td style="text-align: left;">0.023</td>
+<td style="text-align: left;">0.0047</td>
+<td style="text-align: left;">0.021</td>
+<td style="text-align: left;">0.03</td>
+<td style="text-align: left;">0.043</td>
+<td style="text-align: left;">0.16</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">K</td>
+<td style="text-align: left;">376</td>
+<td style="text-align: left;">0.12</td>
+<td style="text-align: left;">0.1</td>
+<td style="text-align: left;">0.016</td>
+<td style="text-align: left;">0.055</td>
+<td style="text-align: left;">0.091</td>
+<td style="text-align: left;">0.15</td>
+<td style="text-align: left;">0.79</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Ca</td>
+<td style="text-align: left;">376</td>
+<td style="text-align: left;">0.035</td>
+<td style="text-align: left;">0.026</td>
+<td style="text-align: left;">0.0062</td>
+<td style="text-align: left;">0.017</td>
+<td style="text-align: left;">0.028</td>
+<td style="text-align: left;">0.044</td>
+<td style="text-align: left;">0.24</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Ti</td>
+<td style="text-align: left;">376</td>
+<td style="text-align: left;">0.014</td>
+<td style="text-align: left;">0.0038</td>
+<td style="text-align: left;">0.0056</td>
+<td style="text-align: left;">0.013</td>
+<td style="text-align: left;">0.013</td>
+<td style="text-align: left;">0.016</td>
+<td style="text-align: left;">0.032</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Mn</td>
+<td style="text-align: left;">376</td>
+<td style="text-align: left;">0.008</td>
+<td style="text-align: left;">0.003</td>
+<td style="text-align: left;">0.003</td>
+<td style="text-align: left;">0.0046</td>
+<td style="text-align: left;">0.008</td>
+<td style="text-align: left;">0.01</td>
+<td style="text-align: left;">0.019</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Fe</td>
+<td style="text-align: left;">376</td>
+<td style="text-align: left;">0.032</td>
+<td style="text-align: left;">0.022</td>
+<td style="text-align: left;">0.0075</td>
+<td style="text-align: left;">0.016</td>
+<td style="text-align: left;">0.026</td>
+<td style="text-align: left;">0.043</td>
+<td style="text-align: left;">0.17</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Zn</td>
+<td style="text-align: left;">376</td>
+<td style="text-align: left;">0.01</td>
+<td style="text-align: left;">0.0068</td>
+<td style="text-align: left;">0.0037</td>
+<td style="text-align: left;">0.0037</td>
+<td style="text-align: left;">0.0088</td>
+<td style="text-align: left;">0.018</td>
+<td style="text-align: left;">0.028</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">BC</td>
+<td style="text-align: left;">376</td>
+<td style="text-align: left;">Inf</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">0.18</td>
+<td style="text-align: left;">1.5</td>
+<td style="text-align: left;">1.9</td>
+<td style="text-align: left;">2.5</td>
+<td style="text-align: left;">Inf</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">fueltype: LPG</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Mg</td>
+<td style="text-align: left;">254</td>
+<td style="text-align: left;">0.0097</td>
+<td style="text-align: left;">0.0053</td>
+<td style="text-align: left;">0.0037</td>
+<td style="text-align: left;">0.0061</td>
+<td style="text-align: left;">0.0079</td>
+<td style="text-align: left;">0.012</td>
+<td style="text-align: left;">0.036</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Al</td>
+<td style="text-align: left;">254</td>
+<td style="text-align: left;">0.053</td>
+<td style="text-align: left;">0.032</td>
+<td style="text-align: left;">0.005</td>
+<td style="text-align: left;">0.033</td>
+<td style="text-align: left;">0.043</td>
+<td style="text-align: left;">0.068</td>
+<td style="text-align: left;">0.16</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Si</td>
+<td style="text-align: left;">254</td>
+<td style="text-align: left;">0.063</td>
+<td style="text-align: left;">0.059</td>
+<td style="text-align: left;">0.0032</td>
+<td style="text-align: left;">0.013</td>
+<td style="text-align: left;">0.047</td>
+<td style="text-align: left;">0.095</td>
+<td style="text-align: left;">0.31</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">S</td>
+<td style="text-align: left;">254</td>
+<td style="text-align: left;">0.026</td>
+<td style="text-align: left;">0.02</td>
+<td style="text-align: left;">0.0019</td>
+<td style="text-align: left;">0.013</td>
+<td style="text-align: left;">0.02</td>
+<td style="text-align: left;">0.03</td>
+<td style="text-align: left;">0.12</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">K</td>
+<td style="text-align: left;">254</td>
+<td style="text-align: left;">0.035</td>
+<td style="text-align: left;">0.023</td>
+<td style="text-align: left;">0.0024</td>
+<td style="text-align: left;">0.02</td>
+<td style="text-align: left;">0.029</td>
+<td style="text-align: left;">0.044</td>
+<td style="text-align: left;">0.16</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Ca</td>
+<td style="text-align: left;">254</td>
+<td style="text-align: left;">0.02</td>
+<td style="text-align: left;">0.014</td>
+<td style="text-align: left;">0.0039</td>
+<td style="text-align: left;">0.01</td>
+<td style="text-align: left;">0.016</td>
+<td style="text-align: left;">0.024</td>
+<td style="text-align: left;">0.098</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Ti</td>
+<td style="text-align: left;">254</td>
+<td style="text-align: left;">0.014</td>
+<td style="text-align: left;">0.0034</td>
+<td style="text-align: left;">0.006</td>
+<td style="text-align: left;">0.013</td>
+<td style="text-align: left;">0.013</td>
+<td style="text-align: left;">0.016</td>
+<td style="text-align: left;">0.024</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Mn</td>
+<td style="text-align: left;">254</td>
+<td style="text-align: left;">0.0072</td>
+<td style="text-align: left;">0.0028</td>
+<td style="text-align: left;">0.003</td>
+<td style="text-align: left;">0.0046</td>
+<td style="text-align: left;">0.0062</td>
+<td style="text-align: left;">0.0097</td>
+<td style="text-align: left;">0.017</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Fe</td>
+<td style="text-align: left;">254</td>
+<td style="text-align: left;">0.03</td>
+<td style="text-align: left;">0.021</td>
+<td style="text-align: left;">0.0061</td>
+<td style="text-align: left;">0.015</td>
+<td style="text-align: left;">0.023</td>
+<td style="text-align: left;">0.037</td>
+<td style="text-align: left;">0.13</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Zn</td>
+<td style="text-align: left;">254</td>
+<td style="text-align: left;">0.0096</td>
+<td style="text-align: left;">0.0067</td>
+<td style="text-align: left;">0.0037</td>
+<td style="text-align: left;">0.0037</td>
+<td style="text-align: left;">0.0082</td>
+<td style="text-align: left;">0.017</td>
+<td style="text-align: left;">0.024</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">BC</td>
+<td style="text-align: left;">253</td>
+<td style="text-align: left;">1.5</td>
+<td style="text-align: left;">0.85</td>
+<td style="text-align: left;">0.13</td>
+<td style="text-align: left;">0.95</td>
+<td style="text-align: left;">1.4</td>
+<td style="text-align: left;">1.9</td>
+<td style="text-align: left;">5</td>
+</tr>
+</tbody>
+</table>
+
+
+</div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Remove the `fueltype` variable</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>unc_arm <span class="ot">&lt;-</span> uncertainty <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>fueltype)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="co">#Use the `sumtable()` function from the `vtable` package, which creates a table</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="fu">sumtable</span>(unc_arm, <span class="at">group =</span> <span class="st">'arm'</span>, <span class="at">group.long =</span> T, <span class="at">add.median =</span> T, <span class="at">out =</span> <span class="st">'kable'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table data-quarto-postprocess="true" class="table table-sm table-striped small">
+<caption>Summary Statistics</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;" data-quarto-table-cell-role="th">Variable</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">N</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">Mean</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">Std. Dev.</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">Min</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">Pctl. 25</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">Pctl. 50</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">Pctl. 75</th>
+<th style="text-align: left;" data-quarto-table-cell-role="th">Max</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">arm: Control</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Mg</td>
+<td style="text-align: left;">323</td>
+<td style="text-align: left;">0.013</td>
+<td style="text-align: left;">0.0071</td>
+<td style="text-align: left;">0.0038</td>
+<td style="text-align: left;">0.0081</td>
+<td style="text-align: left;">0.01</td>
+<td style="text-align: left;">0.016</td>
+<td style="text-align: left;">0.044</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Al</td>
+<td style="text-align: left;">323</td>
+<td style="text-align: left;">0.055</td>
+<td style="text-align: left;">0.036</td>
+<td style="text-align: left;">0.0058</td>
+<td style="text-align: left;">0.033</td>
+<td style="text-align: left;">0.048</td>
+<td style="text-align: left;">0.068</td>
+<td style="text-align: left;">0.21</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Si</td>
+<td style="text-align: left;">323</td>
+<td style="text-align: left;">0.072</td>
+<td style="text-align: left;">0.072</td>
+<td style="text-align: left;">0.0039</td>
+<td style="text-align: left;">0.017</td>
+<td style="text-align: left;">0.043</td>
+<td style="text-align: left;">0.11</td>
+<td style="text-align: left;">0.36</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">S</td>
+<td style="text-align: left;">323</td>
+<td style="text-align: left;">0.034</td>
+<td style="text-align: left;">0.021</td>
+<td style="text-align: left;">0.0048</td>
+<td style="text-align: left;">0.02</td>
+<td style="text-align: left;">0.029</td>
+<td style="text-align: left;">0.041</td>
+<td style="text-align: left;">0.14</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">K</td>
+<td style="text-align: left;">323</td>
+<td style="text-align: left;">0.12</td>
+<td style="text-align: left;">0.098</td>
+<td style="text-align: left;">0.016</td>
+<td style="text-align: left;">0.053</td>
+<td style="text-align: left;">0.089</td>
+<td style="text-align: left;">0.15</td>
+<td style="text-align: left;">0.72</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Ca</td>
+<td style="text-align: left;">323</td>
+<td style="text-align: left;">0.034</td>
+<td style="text-align: left;">0.026</td>
+<td style="text-align: left;">0.0062</td>
+<td style="text-align: left;">0.017</td>
+<td style="text-align: left;">0.027</td>
+<td style="text-align: left;">0.042</td>
+<td style="text-align: left;">0.24</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Ti</td>
+<td style="text-align: left;">323</td>
+<td style="text-align: left;">0.014</td>
+<td style="text-align: left;">0.0039</td>
+<td style="text-align: left;">0.0059</td>
+<td style="text-align: left;">0.013</td>
+<td style="text-align: left;">0.013</td>
+<td style="text-align: left;">0.017</td>
+<td style="text-align: left;">0.032</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Mn</td>
+<td style="text-align: left;">323</td>
+<td style="text-align: left;">0.008</td>
+<td style="text-align: left;">0.003</td>
+<td style="text-align: left;">0.003</td>
+<td style="text-align: left;">0.0046</td>
+<td style="text-align: left;">0.0082</td>
+<td style="text-align: left;">0.01</td>
+<td style="text-align: left;">0.018</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Fe</td>
+<td style="text-align: left;">323</td>
+<td style="text-align: left;">0.032</td>
+<td style="text-align: left;">0.021</td>
+<td style="text-align: left;">0.0075</td>
+<td style="text-align: left;">0.016</td>
+<td style="text-align: left;">0.025</td>
+<td style="text-align: left;">0.044</td>
+<td style="text-align: left;">0.17</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Zn</td>
+<td style="text-align: left;">323</td>
+<td style="text-align: left;">0.011</td>
+<td style="text-align: left;">0.0069</td>
+<td style="text-align: left;">0.0037</td>
+<td style="text-align: left;">0.0037</td>
+<td style="text-align: left;">0.009</td>
+<td style="text-align: left;">0.018</td>
+<td style="text-align: left;">0.028</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">BC</td>
+<td style="text-align: left;">323</td>
+<td style="text-align: left;">Inf</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;">0.18</td>
+<td style="text-align: left;">1.5</td>
+<td style="text-align: left;">1.9</td>
+<td style="text-align: left;">2.5</td>
+<td style="text-align: left;">Inf</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">arm: Intervention</td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Mg</td>
+<td style="text-align: left;">307</td>
+<td style="text-align: left;">0.01</td>
+<td style="text-align: left;">0.006</td>
+<td style="text-align: left;">0.0037</td>
+<td style="text-align: left;">0.0063</td>
+<td style="text-align: left;">0.0084</td>
+<td style="text-align: left;">0.013</td>
+<td style="text-align: left;">0.038</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Al</td>
+<td style="text-align: left;">307</td>
+<td style="text-align: left;">0.054</td>
+<td style="text-align: left;">0.034</td>
+<td style="text-align: left;">0.005</td>
+<td style="text-align: left;">0.032</td>
+<td style="text-align: left;">0.043</td>
+<td style="text-align: left;">0.067</td>
+<td style="text-align: left;">0.17</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Si</td>
+<td style="text-align: left;">307</td>
+<td style="text-align: left;">0.067</td>
+<td style="text-align: left;">0.065</td>
+<td style="text-align: left;">0.0032</td>
+<td style="text-align: left;">0.016</td>
+<td style="text-align: left;">0.048</td>
+<td style="text-align: left;">0.097</td>
+<td style="text-align: left;">0.31</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">S</td>
+<td style="text-align: left;">307</td>
+<td style="text-align: left;">0.029</td>
+<td style="text-align: left;">0.024</td>
+<td style="text-align: left;">0.0019</td>
+<td style="text-align: left;">0.014</td>
+<td style="text-align: left;">0.021</td>
+<td style="text-align: left;">0.035</td>
+<td style="text-align: left;">0.16</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">K</td>
+<td style="text-align: left;">307</td>
+<td style="text-align: left;">0.055</td>
+<td style="text-align: left;">0.074</td>
+<td style="text-align: left;">0.0024</td>
+<td style="text-align: left;">0.022</td>
+<td style="text-align: left;">0.034</td>
+<td style="text-align: left;">0.052</td>
+<td style="text-align: left;">0.79</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Ca</td>
+<td style="text-align: left;">307</td>
+<td style="text-align: left;">0.024</td>
+<td style="text-align: left;">0.019</td>
+<td style="text-align: left;">0.0039</td>
+<td style="text-align: left;">0.011</td>
+<td style="text-align: left;">0.018</td>
+<td style="text-align: left;">0.03</td>
+<td style="text-align: left;">0.12</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Ti</td>
+<td style="text-align: left;">307</td>
+<td style="text-align: left;">0.014</td>
+<td style="text-align: left;">0.0035</td>
+<td style="text-align: left;">0.0056</td>
+<td style="text-align: left;">0.013</td>
+<td style="text-align: left;">0.013</td>
+<td style="text-align: left;">0.016</td>
+<td style="text-align: left;">0.024</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Mn</td>
+<td style="text-align: left;">307</td>
+<td style="text-align: left;">0.0073</td>
+<td style="text-align: left;">0.0029</td>
+<td style="text-align: left;">0.003</td>
+<td style="text-align: left;">0.0046</td>
+<td style="text-align: left;">0.0067</td>
+<td style="text-align: left;">0.0097</td>
+<td style="text-align: left;">0.019</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Fe</td>
+<td style="text-align: left;">307</td>
+<td style="text-align: left;">0.03</td>
+<td style="text-align: left;">0.021</td>
+<td style="text-align: left;">0.0061</td>
+<td style="text-align: left;">0.016</td>
+<td style="text-align: left;">0.024</td>
+<td style="text-align: left;">0.037</td>
+<td style="text-align: left;">0.13</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Zn</td>
+<td style="text-align: left;">307</td>
+<td style="text-align: left;">0.0095</td>
+<td style="text-align: left;">0.0066</td>
+<td style="text-align: left;">0.0037</td>
+<td style="text-align: left;">0.0037</td>
+<td style="text-align: left;">0.0081</td>
+<td style="text-align: left;">0.017</td>
+<td style="text-align: left;">0.024</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">BC</td>
+<td style="text-align: left;">306</td>
+<td style="text-align: left;">1.6</td>
+<td style="text-align: left;">0.86</td>
+<td style="text-align: left;">0.13</td>
+<td style="text-align: left;">1.1</td>
+<td style="text-align: left;">1.5</td>
+<td style="text-align: left;">2.1</td>
+<td style="text-align: left;">5</td>
+</tr>
+</tbody>
+</table>
+
+
+</div>
+</div>
+<p>The tables above are just a way to represent the summary statistics of the uncertainties, however, the uncertainties will only be useful for the PMF analysis after the conclusion of this project. One thing noticed also from this table, is that there are some infinite values from the BC concentrations, which also show that there are missing values that have to be corrected in earlier steps. From this tables we can also see that there are 376 observations from the ‘Biomass’ and 254 from the ‘LPG’ fueltypes. Meanwhile, there are 323 observations from the ‘Control’ arm and 307 from the ‘Intervention’ arm.</p>
+</section>
+<section id="hapin-variables" class="level2">
+<h2 class="anchored" data-anchor-id="hapin-variables">HAPIN variables</h2>
+<p>Loading the <code>hapin_samples</code> file.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>hapin <span class="ot">&lt;-</span> <span class="fu">read_rds</span>(<span class="fu">here</span>(<span class="st">"data"</span>, <span class="st">"processed-data"</span>, <span class="st">"hapin_samples.rds"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>First, check if there are missing values for any of the observations using the <code>gg_miss_var()</code> function.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gg_miss_var</span>(hapin)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="data_exploring_code_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>As seen above, there are some missing values from the observational exposures (kerosene to coil), there is just one missing observation for PM2.5 and BC concentrations and there is more than 30 missing observations for CO (carbon monoxide). The missing observation of BC might explain the missing value spotted before, so this observation might actually have to be dropped down.</p>
+<p>Now I will create a barplot showing the distribution of responses for the categorical variables <code>kerosene</code>, <code>trash</code>, <code>stove_other</code>, <code>stove</code>, <code>smoky</code>, <code>incense</code>, <code>generator</code>, <code>smoke</code>, <code>crop</code>, and <code>coil</code>. First doing data manipulation so the df is useful for plotting.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Pivot longer the `hapin` df to make a barplot</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>hapin_longer <span class="ot">&lt;-</span> hapin <span class="sc">%&gt;%</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">c</span>(<span class="st">`</span><span class="at">kerosene</span><span class="st">`</span>, <span class="st">`</span><span class="at">trash</span><span class="st">`</span>, <span class="st">`</span><span class="at">stove_other</span><span class="st">`</span>, <span class="st">`</span><span class="at">stove</span><span class="st">`</span>, <span class="st">`</span><span class="at">smoky</span><span class="st">`</span>, <span class="st">`</span><span class="at">incense</span><span class="st">`</span>, <span class="st">`</span><span class="at">generator</span><span class="st">`</span>, <span class="st">`</span><span class="at">smoke</span><span class="st">`</span>, <span class="st">`</span><span class="at">crop</span><span class="st">`</span>, <span class="st">`</span><span class="at">coil</span><span class="st">`</span>)) <span class="sc">%&gt;%</span> <span class="co">#Here selecting only the necessary variables</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">everything</span>(),</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>               <span class="at">names_to =</span> <span class="st">"exposure"</span>, <span class="at">values_to =</span> <span class="st">"response"</span>) <span class="co">#Create the longer df</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a><span class="co">#Create a simple barplot</span></span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(hapin_longer, <span class="fu">aes</span>(<span class="at">x=</span> exposure, <span class="at">fill=</span> response))<span class="sc">+</span></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">position =</span> <span class="st">"dodge"</span>)<span class="sc">+</span></span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="data_exploring_code_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The bar plot shows that the majority of participants recorded to not being exposed to most of the exposures, except to <code>stove</code>, which is the stove that the participants use. Others also recorded that were exposed to other stoves, or to trash burning.</p>
+<p>And finally plotting the PM2.5, BC and CO concentrations in different graphs using <code>ggplot()</code></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Histogram plot for the PM2.5 concentrations</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(hapin, <span class="fu">aes</span>(<span class="at">x=</span> pm25, <span class="at">fill=</span> fueltype))<span class="sc">+</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>()<span class="sc">+</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>()<span class="sc">+</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x=</span> <span class="st">"PM2.5 Concentration (ug/m3)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>`stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Removed 1 rows containing non-finite values (`stat_bin()`).</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="data_exploring_code_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Histogram plot for the BC concentrations</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(hapin, <span class="fu">aes</span>(<span class="at">x=</span> bc, <span class="at">fill=</span> fueltype))<span class="sc">+</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>()<span class="sc">+</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>()<span class="sc">+</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x=</span> <span class="st">"Black Carbon Concentration (ug/m3)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>`stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Removed 1 rows containing non-finite values (`stat_bin()`).</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="data_exploring_code_files/figure-html/unnamed-chunk-10-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co">#Histogram plot for the CO concentrations</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(hapin, <span class="fu">aes</span>(<span class="at">x=</span> co, <span class="at">fill=</span> fueltype))<span class="sc">+</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>()<span class="sc">+</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>()<span class="sc">+</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x=</span> <span class="st">"Carbon Monoxide Concentration (ppm)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>`stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Removed 31 rows containing non-finite values (`stat_bin()`).</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="data_exploring_code_files/figure-html/unnamed-chunk-10-3.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The histograms for the concentration of the three pollutants show that they don’t follow a normal distribution. Most of the concentrations are low, and it is also seen that overall the concentrations in the LPG fueltype are lower than the Biomass group. If these variables will be used for modeling purposes, they should be log-transformed or using a logistic regression approach.</p>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      return note.innerHTML;
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

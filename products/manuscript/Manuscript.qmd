@@ -1,6 +1,6 @@
 ---
-title: "Elemental characterization of personal samples from the HAPIN trial for Source Apportionment"
-subtitle: "Project: Part 1"
+title: "Elemental characterization of personal filter samples from the HAPIN trial for Source Apportionment"
+subtitle: "Project: Part 2"
 author: Erick E. Mollinedo
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
 format:
@@ -14,82 +14,142 @@ format:
 # load a few R packages
 library(here)
 library(knitr)
+library(readr)
 library(tidyverse)
-library(readxl)
 ```
 
 # Introduction
 
-## General Background Information
+## Background
 
-Household air pollution (HAP), due to the combustion of solid fuels for cooking and heating, is one of the most prominent environmental health issues in low- and middle-income countries (LMICs).^1^ Exposure to HAP has been linked to more than 2.31 million deaths in 2019 and it is associated with adverse cardiovascular and respiratory health outcomes.^2,3^ Particulate matter with an aerodynamic diameter less than 2.5 micrometers (PM~2.5~) is one of the major air pollutants chemically and physically composed of crustal material, black carbon (BC), organic compounds, metals and others. Toxicity from PM~2.5~ depends, among many factors, on the chemical composition of the particles which heavily depend on the sources of emissions.^4,5^
+Household air pollution (HAP), due to the combustion of solid fuels for cooking and heating, is one of the most prominent environmental health issues in low- and middle-income countries (LMICs).^1^ HAP has been listed as the second environmental health risk factor worldwide, just after outdoor air pollution.^2^ Exposure to HAP has been linked to more than 2.31 million deaths in 2019 and it is associated with adverse cardiovascular and respiratory health outcomes.^3,4^ Particulate matter with an aerodynamic diameter less than 2.5 micrometers (PM~2.5~) is one of the major air pollutants chemically and physically composed of crustal material, black carbon (BC), organic compounds, metals and others. Toxicity from PM~2.5~ depends, among many factors, on the chemical composition of the particles which heavily depend on the sources of emissions.^5,6^
 
-The identification of point sources of pollution is important for the development of strategies to improve air quality. Source apportionment (SA) is a methodology to reconstruct the impact of emissions from different sources, a method applied to different pollutants such as particulate matter.^6^ The most used SA methods includes receptor models, an example of this is the positive matrix factorization (PMF). One advantage of PMF is that it does not require the source profiles prior to analysis and there is no limit on the number of sources, however, it is required the knowledge of potential source profiles. Another important piece before conducting source apportionment is to correctly process the data (which includes concentrations and uncertainties), and to explore associations to try to identify the potential sources. Just a few studies about SA in LMICs have been published, therefore it is important to characterize chemical composition and potential sources of air pollutants in these settings.^7-9^
+The identification of point sources of pollution is important for the development of strategies to improve air quality. Source apportionment (SA) is a methodology to reconstruct the impact of emissions from different sources, a method applied to different pollutants such as particulate matter.^7^ The most used SA methods includes receptor models, an example of this is the positive matrix factorization (PMF). One advantage of PMF is that it does not require the source profiles prior to analysis and there is no limit on the number of sources, however, it is required the knowledge of potential source profiles. Another important piece before conducting source apportionment is to correctly process the data (which includes concentrations and uncertainties), and to explore associations to try to identify the potential sources. Just a few studies about SA in LMICs have been published, therefore it is important to characterize chemical composition and potential sources of air pollutants in these settings.^8-10^
 
-## Description of data and data source
+The Household Air Pollution Intervention Network (HAPIN) trial was a randomized controlled trial where a liquefied petroleum gas (LPG) stove was delivered as an intervention to half of the pregnant women participants, meanwhile the other half remained cooking using their biomass stove. The intervention was evaluated in terms of reduction of exposures and specific health outcomes by comparing the two study groups (Control and Intervention). Baseline measurements were taken to the participants, and then followed-up for about 18 months, conducting exposure measurements three times during pregnancy and three times after the birth of the child. A description of the HAPIN trial and the methods for exposure sampling can be found elsewhere.^11,12^ A source apportionment pilot study from HAPIN was conducted in 2022. This study was conducted in 64 and 59 personal exposure filter samples from the pilot phase in Guatemala and Rwanda, respectively. Twenty-two chemical species were analyzed in all samples using X-ray fluorescence (XRF), a non-destructive spectrometry analytical method, but only 12 species were detected at both study sites in comparable levels. Based on the chemical species detected, four potential sources of PM~2.5~ were identified in both sites. One study caveat is the small sample size and limited assessment of chemical composition and sources between study arms, so further studies to complement the findings are needed.^13^
 
-The data comes from filter samples of PM~2.5~ from personal exposure measurements conducted in pregnant women from the Household Air Pollution Intervention Network [(HAPIN)](https://www.hapintrial.org/) trial, in Guatemala. In brief, this is a randomized controlled trial, where a liquefied petroleum gas (LPG) stove was delivered as an intervention to half of the pregnant women participants, meanwhile the other half remained cooking using their biomass stove. The intervention was evaluated in terms of reduction of exposures and specific health outcomes by comparing the two study groups (Control and Intervention). The filter samples represent the exposures to PM~2.5~ in a 24-hour period. In total, six hundred and forty eight sample filters are available, where eighteen correspond to field blanks. For these filters, the elemental composition was determined using X-Ray Fluorescence (XRF) to determine the concentrations of 24 elements.
+## Aims and Hypothesis questions
 
-1.  Concentrations:
-
-As seen in the following glimpse from the one of the spreadsheets that contains the concentrations data, each filter sample has its unique ID in `Filter`. There are other 24 variables that list the concentrations of each element. The concentrations are listed in micrograms per square centimeter (ug/cm^2^). Also, each filter is categorized in either two types (Personal sample or Blank) under `Type`.
-
-```{r}
-concentration <- read_excel(here("data", "raw-data", "conc_unc_hapingt_emollinedo.xlsx"), sheet = "Concentration")
-
-#Have a 'glimpse' of the data
-glimpse(concentration)
-
-#Check which values are under the `Type` variable
-unique(concentration$Type)
-```
-
-2.  Uncertainties:
-
-The uncertainties are stored on a different tab from the same excel file, but they match to the concentrations for each filter sample (rows) and each element (columns). These values are also stored in ug/cm^2^.
-
-```{r}
-uncertainty <- read_excel(here("data", "raw-data", "conc_unc_hapingt_emollinedo.xlsx"), sheet = "Uncertainty")
-
-#Produce a summary of uncertainties by each element
-summary(uncertainty)
-```
-
-3.  Other variables from the HAPIN study:
-
-Another source of data is a .csv file that contains over 1000 variables collected from the study, associated to a single filter sample or a single participant (depending on the perspective). I am only interested in exploring some of the variables such as "Treatment" and "Timepoint" to categorize the filters according to study arm or type of fuel. "PM~2.5~", "Black Carbon" and "Carbon monoxide" to have a reference of the concentrations of the three air pollutants measured. And other variables that record exposures such as trash burning, vehicle emissions, tobacco smoke among others.
-
-## Questions/Hypotheses to be addressed
-
-One of the objectives of this project is to create a clean output that consists in a file with adjusted concentrations for all samples and each elemental species, and another file with the adjusted uncertainties for the same samples and elemental species. These outputs will be used as inputs for the EPA PMF 5.0 software to try to determine the potential sources that contributed to these samples. However, there are certain questions that I plan to answer:
+One of the objectives of this project is to create a clean output that consists in a file with adjusted concentrations for all samples and each elemental species, and another file with the adjusted uncertainties for the same samples and elemental species. These outputs will be used as inputs for the EPA PMF 5.0 software to try to determine the potential sources that contributed to these samples. However, the questions I plan to answer with the data analysis of this project is:
 
 1.  What elements are correlated among each other from these filter samples?
 2.  Is there a difference in concentrations if we categorize the samples by type of fuel and by study arm?
 3.  What exposures could explain the variations in the concentrations of the most significant elemental species?
 
-Answering these questions will also be helpful before performing the PMF analysis using the EPA software, to check patterns and associations between elemental species.
-
 # Methods
 
-## Data processing
+## Data collection
 
-First, the concentration values will be cleaned by removing unnecessary character such as brackets, and by standardizing in the same numeric notation. Then, all elements where more than 50% of the samples are below the detection limit (DL) will be filtered out. The detection limit for each elemental species is listed in the same excel spreadsheet that contains the raw concentrations and uncertainties. For the remaining elemental species, the concentrations will be adjusted based on the blank filters, and the values below DL will be replaced as their corresponding DL divided by the square root of 2. Finally, the concentrations will be transformed to micrograms per cubic meter (ug/m^3^) operating the concentration by the filter area, divided by the sample volume. Also, the uncertainties will be transformed to ug/m^3^ to match the units of the concentrations. In addition, the black carbon concentrations will be added to add another species to the analysis.
+The main exposure data comes from filter samples of personal exposure measurements in pregnant women participants from the HAPIN trial, in Guatemala. In total, six hundred and forty eight sample filters are available, where eighteen correspond to field blanks. From the HAPIN trial study design, in total, six exposure measurements (visits) were conducted during pregnancy in around 800 participants, but for this scenario, only 648 filter samples were randomly selected for chemical species characterization. Other exposures where collected as categorical variables using standardized questionnaires administered in each visit. These exposures capture some of the sources of exposure such as tobacco smoke, trash burning, use on incense or coil, kerosene and others.
 
-The uncertainties will be processed by first, removing all the elemental species that had more than 50% of their samples below the detection limit, as seen above. Then, the uncertainties will be adjusted based on equations derived from the law of propagation of uncertainty. In brief, the equations consider the individual uncertainties from each one of the variables, in this case the XRF instrument uncertainty, the area of the filter, volume, and the attenuation (in case of the Black carbon measurements).
+## Concentration estimates
+
+The average 24-hour PM~2.5~ concentrations were calculated using the following equation:
+
+$$PM_{2.5} = M/V$$ Where, M is the mass deposition of particles in the filter and V is the volume of air the sampler used to collect the particles.
+
+The black carbon 24-hour concentrations were calculated using the following equation:
+
+$$BC = \frac{ln(I_{f}/I_{0}) * A/V * 10^6} \sigma $$ Where, I~f~ is the post-attenuation and I~0~ is the pre-attenuation, A is the area of the filter, V is the volume of air the sampler used to collect the particles and $\sigma$ is the mass absorption coefficient (a constant).
+
+The concentration of the chemical species (elements) on the filters was determined using X-Ray Fluorescence (XRF), and the uncertainties were estimated also based on the XRF instrument.
+
+## Concentration and Uncertainties data processing
+
+First, all chemical species where more than 50% of the samples are below the detection limit (LOD) were filtered out, leaving a total of 10 chemical species. For these remaining species, the concentrations were adjusted based on the blank filters, and the values below LOD were replaced as their corresponding LOD divided by the square root of 2. Finally, the concentrations were transformed to micrograms per cubic meter (ug/m^3^). Also, the uncertainties were transformed to ug/m^3^ to match the units of the concentrations. In addition, the black carbon concentrations were added to add another chemical species to the analysis.
+
+The uncertainties were processed by, first removing all the chemical species that had more than 50% of their samples below the detection limit, as seen above. Then, the uncertainties were adjusted based on equations derived from the law of propagation of uncertainty. In brief, the equations consider the individual uncertainties from each one of the variables, in this case the XRF instrument uncertainty, the area of the filter, volume, and the attenuation (in case of the Black carbon measurements).
 
 ## Statistical analysis
 
-The correlation (r^2^) between elemental species will be determined using either individual paired correlations or by a correlation plot matrix. Additional plots, such as boxplots, to visualize and compare how the concentrations differ by type of fuel and by study arm. These differences will be assessed for statistical significance. After exploring the distribution that best fits the dataste, the most appropriate model will be implemented to explore what exposure variables are mostly associated with the concentrations of the most significant elemental species.
+The correlation (r^2^) between chemical species will be determined using either individual paired correlations or by a correlation plot matrix. Additional plots, such as boxplots, to visualize and compare how the concentrations differ by type of fuel and by study arm. These differences will be assessed for statistical significance. After exploring the distribution that best fits the dataste, the most appropriate model will be implemented to explore what exposure variables are mostly associated with the concentrations of the most significant elemental species.
 
+# Preliminary Results
+
+## Description of data
+
+1.  Concentrations:
+
+As seen in the following glimpse from the cleaned `concentration` dataframe, it contains the ID of the 630 sample filters, along with the concentrations of 11 chemical species (Mg, Al, Si, S, K, Ca, Ti, Mn, Fe, Zn, and BC), and to which Arm and Fueltype they belong.
+
+```{r}
+concentration <- read_rds(here("data", "processed-data", "concentration.rds"))
+
+glimpse(concentration)
+```
+
+2.  Uncertainties:
+
+The cleaned `uncertainty` dataframe contains the uncertainty of the 11 chemical species. It contains the same name of variables as the `concentration` dataframe.
+
+```{r}
+uncertainty <- read_rds(here("data", "processed-data", "uncertainty.rds"))
+
+glimpse(uncertainty)
+```
+
+3.  Other variables from the HAPIN study:
+
+The cleaned `hapin_samples` dataframe contains information of the PM~2.5~, BC and CO (carbon monoxide) concentrations, besides other important recorded exposures, as seen from the glimpse below. It also contains the filter IDs, the arm and fueltype.
+
+```{r}
+hapin_samples <- read_rds(here("data", "processed-data", "hapin_samples.rds"))
+
+glimpse(hapin_samples)
+```
+
+## Exploratory data analysis
+
+### Chemical species concentrations
+
+The concentration of the chemical species are distributed in different ranges depending on their type. For example, the highest concentrations were determined to be for Black carbon (BC), with values from 1 to 100 ug/m^3^. The remaining chemical species have lower concentrations, ranging from less than 0.1 ug/m^3^ to 10 ug/m^3^. Other noticeable patterns is that some of the species were found in higher concentrations for personal samples from participants that used biomass stoves, compared to LPG stoves (@fig-concentrations), such as BC, K, and Ca, and similar patterns were observed when categorized by intervention arm (Supplementary material). The following step will be to determine which of these chemical species have statistically significant differences among both comparison groups.
+
+In terms of correlations, Spearman correlation was estimated between all the chemical species and @fig-correlations, shows the associations highlighting the R^2^ value. It is observed that the highest correlation is observed between Si and Fe, Ti-Fe, and Al-Si. These values could indicate that these species come from the same source, so it will probably be easier to identify using the PMF software after the conclusion of this project.
+
+It is important to remember that the concentrations of the chemical species were recalculated as referenced in the `data_cleaning_code.qmd` file, alongside with the uncertainties. A summary statistics table of the uncertainties can be found in the `data_cleaning_code.qmd` code.
+
+![Chemical species concentrations by type of fuel](../../results/figures/boxplot-fueltype.jpg){#fig-concentrations}
+
+![Correlation plot for chemical species](../../results/figures/corplot.jpg){#fig-correlations}
+
+### Other Exposure variables
+
+From the `hapin_samples` dataframe, it was observed that there are some missing values for most of the exposure variables according to the Missing variables plot (@fig-missing). The variable with more missing values (\>30) was the CO concentrations. Given that this variable had the highest number of missing concentrations, it may not be ideal to include it as part of the final analysis. Other missing values are from the recorded exposures such as kerosene, trash burning, stove use, external stoves ('stove_other'), and others. It was also observed that there is one observation without BC concentration. This observation could be dropped out since the PMF analysis after the conclusion of this project requires all the concentrations and uncertainties to be available (No NA/missing values).
+
+The bar plot (@fig-categorical), shows that most of the participants recorded little exposures, with the exception of stove use at home ('stove'), stoves from other homes ('stove_other') and trash burning ('trash'). Having not so many recorded exposures other than the previously mentioned, could make the analysis difficult because of sample size or any other statistical adjustments will have to occur before applying a regression model analysis approach.
+
+@fig-pm shows the distribution of PM~2.5~ concentrations by type of fuel. It is observed that the concentrations do not follow a normal distribution and it seems like, as expected, the LPG stove users samples have lower concentrations than the biomass stove users. The similar trends are observed for the CO and BC concentrations (Supplementary material).
+
+![Plot for missing values for the `hapin_samples` dataframe](../../results/figures/missing-values.jpg){#fig-missing}
+
+![Distribution of responses by the Categorical variables](../../results/figures/cat-exposures.jpg){#fig-categorical}
+
+![PM~2.5~ Concentrations](../../results/figures/pm25.jpg){#fig-pm}
+
+{{< pagebreak >}}
 
 # References
 
 1.  Gordon, S. B. et al. Respiratory risks from household air pollution in low and middle income countries. The Lancet Respiratory Medicine 2, 823–860 (2014).
-2.  Murray, C. J. L. et al. Global burden of 87 risk factors in 204 countries and territories, 1990–2019: a systematic analysis for the Global Burden of Disease Study 2019. The Lancet 396, 1223–1249 (2020).
-3.  Pope, C. A. & Dockery, D. W. Health Effects of Fine Particulate Air Pollution: Lines that Connect. Journal of the Air & Waste Management Association 56, 709–742 (2006).
-4.  Clasen, T. et al. Design and Rationale of the HAPIN Study: A Multicountry Randomized Controlled Trial to Assess the Effect of Liquefied Petroleum Gas Stove and Continuous Fuel Distribution. Environ Health Perspect 128, 047008 (2020).
-5.  Mohammed, M. O. A. et al. Potential Toxicological and Cardiopulmonary Effects of PM2.5 Exposure and Related Mortality: Findings of Recent Studies Published during 2003-2013. Biomed Environ Sci.
-6.  Viana, M. et al. Source apportionment of particulate matter in Europe: A review of methods and results. Journal of Aerosol Science 39, 827–849 (2008).
-7.  Zhou, Z. et al. Chemical Characterization and Source Apportionment of Household Fine Particulate Matter in Rural, Peri-urban, and Urban West Africa. Environ. Sci. Technol. 48, 1343–1351 (2014).
-8.  Sharma, S. K. et al. Source Apportionment of PM2.5 in Delhi, India Using PMF Model. Bull Environ Contam Toxicol 97, 286–293 (2016).
-9.  Martínez-Cinco, M., Santos-Guzmán, J. & Mejía-Velázquez, G. Source apportionment of PM 2.5 for supporting control strategies in the Monterrey Metropolitan Area, Mexico. Journal of the Air & Waste Management Association 66, 631–642 (2016).
+2.  GBD. Global Burden of Disease Study 2019 (GBD 2019) Results. http://ghdx.healthdata.org/gbd-results-tool (2020).
+3.  Murray, C. J. L. et al. Global burden of 87 risk factors in 204 countries and territories, 1990–2019: a systematic analysis for the Global Burden of Disease Study 2019. The Lancet 396, 1223–1249 (2020).
+4.  Pope, C. A. & Dockery, D. W. Health Effects of Fine Particulate Air Pollution: Lines that Connect. Journal of the Air & Waste Management Association 56, 709–742 (2006).
+5.  Clasen, T. et al. Design and Rationale of the HAPIN Study: A Multicountry Randomized Controlled Trial to Assess the Effect of Liquefied Petroleum Gas Stove and Continuous Fuel Distribution. Environ Health Perspect 128, 047008 (2020).
+6.  Mohammed, M. O. A. et al. Potential Toxicological and Cardiopulmonary Effects of PM2.5 Exposure and Related Mortality: Findings of Recent Studies Published during 2003-2013. Biomed Environ Sci.
+7.  Viana, M. et al. Source apportionment of particulate matter in Europe: A review of methods and results. Journal of Aerosol Science 39, 827–849 (2008).
+8.  Zhou, Z. et al. Chemical Characterization and Source Apportionment of Household Fine Particulate Matter in Rural, Peri-urban, and Urban West Africa. Environ. Sci. Technol. 48, 1343–1351 (2014).
+9.  Sharma, S. K. et al. Source Apportionment of PM2.5 in Delhi, India Using PMF Model. Bull Environ Contam Toxicol 97, 286–293 (2016).
+10. Martínez-Cinco, M., Santos-Guzmán, J. & Mejía-Velázquez, G. Source apportionment of PM 2.5 for supporting control strategies in the Monterrey Metropolitan Area, Mexico. Journal of the Air & Waste Management Association 66, 631–642 (2016).
+11. Clasen, T., Checkley, W., Peel, J. L., Balakrishnan, K., McCracken, J. P., Rosa, G., Thompson, L. M., Barr, D. B., Clark, M. L., Johnson, M. A., Waller, L. A., Jaacks, L. M., Steenland, K., Miranda, J. J., Chang, H. H., Kim, D.-Y., McCollum, E. D., Davila-Roman, V. G., Papageorghiou, A., … HAPIN Investigators. Design and Rationale of the HAPIN Study: A Multicountry Randomized Controlled Trial to Assess the Effect of Liquefied Petroleum Gas Stove and Continuous Fuel Distribution. Environmental Health Perspectives, 128(4), 047008. (2020).
+12. Johnson, M. A., Steenland, K., Piedrahita, R., Clark, M. L., Pillarisetti, A., Balakrishnan, K., Peel, J. L., Naeher, L. P., Liao, J., Wilson, D., Sarnat, J., Underhill, L. J., Burrowes, V., McCracken, J. P., Rosa, G., Rosenthal, J., Sambandam, S., de Leon, O., Kirby, M. A., … HAPIN Investigators. Air Pollutant Exposure and Stove Use Assessment Methods for the Household Air Pollution Intervention Network (HAPIN) Trial. Environmental Health Perspectives, 128(4), 047009. (2020).
+13. Kearns, K. A. Exposures to household air pollution in women across four diverse countries as part of a multi-country cookstove intervention trial. (2022).
+
+{{< pagebreak >}}
+
+# Supplementary material
+
+![Chemical species concentrations by study arm](../../results/figures/boxplot-arm.jpg)
+
+![Carbon monoxide (CO) Concentrations](../../results/figures/co.jpg)
+
+![Black carbon (BC) Concentrations](../../results/figures/bc.jpg)
