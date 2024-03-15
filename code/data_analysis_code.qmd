@@ -1,0 +1,898 @@
+---
+title: "Project Part 3"
+subtitle: "Data analysis code"
+author: Erick E. Mollinedo
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+format: html
+editor: visual
+---
+
+List of packages needed for the whole data processing/data analysis
+
+```{r}
+library(here)
+library(readxl)
+library(tidyverse)
+library(naniar)
+library(vtable)
+library(corrplot)
+library(RColorBrewer)
+library(ggpubr)
+library(rstatix)
+```
+
+##Data Cleaning
+
+### HAPIN Guatemala data cleaning
+
+```{r}
+#Load the files and assign them to independent data frames
+hapin <- read_csv(here("data", "raw-data", "HAPIN_EX17_Guatemala_20230728.csv"))
+xrflist <- read_csv(here("data", "raw-data", "sa_filters_emollinedo.csv"))
+
+#Select only the variables I am interested to work with
+hapin <- hapin %>% select(trt_blinded, timepoint, h41_m_ecm_fid, h41_b_ecm_fid, h41b_filter1, h41b_filter2, h42_cook, h42_smoke, h42_coil, h42_trash, h42_kero, h42_incence, h42_generator, h42_smoked, h42_crop, h42_smoky_kitc, ECM_grav_neph_conc_M, ECM_bc_conc_M, CO_avg_ppm_M)
+
+#Make sure all filter IDs are upper case, using the `mutate()` function with `toupper()`
+hapin <- hapin %>% 
+  mutate(h41_m_ecm_fid = toupper(h41_m_ecm_fid),
+         h41b_filter1 = toupper(h41b_filter1),
+         h41_b_ecm_fid = toupper(h41_b_ecm_fid),
+         h41b_filter2 = toupper(h41b_filter2))
+
+#Select all filters that match with the list of filters from XRF, using the `filter()` function.
+hapin <- hapin %>%
+  filter(h41_m_ecm_fid %in% xrflist$filter_id |
+           h41b_filter1 %in% xrflist$filter_id |
+           h41_b_ecm_fid %in% xrflist$filter_id |
+           h41b_filter2 %in% xrflist$filter_id)
+
+#Concatenate `trt_blinded` and `timepoint` into a new temporary variable
+hapin$concatenated <- paste(hapin$trt_blinded, hapin$timepoint) 
+
+#Create a new variable `fueltype` that categorizes all the observations by type of fuel ('R' means the visit belongs to the 'Control' treatment and 'Q' for the 'Intervention' treatment)
+hapin <- mutate(hapin, fueltype = case_when(
+  endsWith(concatenated, "BL") ~ "Biomass", #BL corresponds to the baseline, where all the participants had a biomass type fuel stove
+  endsWith(concatenated, "R P1") ~ "Biomass",
+  endsWith(concatenated, "R P2") ~ "Biomass",
+  endsWith(concatenated, "Q P1") ~ "LPG",
+  endsWith(concatenated, "Q P2") ~ "LPG",
+  endsWith(concatenated, "R BLP1") ~ "Biomass",
+  endsWith(concatenated, "R P1P2") ~ "Biomass",
+  endsWith(concatenated, "R P2B1") ~ "Biomass",
+  endsWith(concatenated, "Q BLP1") ~ "LPG",
+  endsWith(concatenated, "Q P1P2") ~ "LPG",
+  endsWith(concatenated, "Q P2B1") ~ "LPG"))
+
+#Rename some of the variables and delete unnecessary ones
+hapin <- hapin %>% rename(filter_id = "h41_m_ecm_fid", dup1_filterid = "h41b_filter1", dup2_filterid = "h41b_filter2",
+                         blank_filterid = "h41_b_ecm_fid", arm = "trt_blinded", pm25 = "ECM_grav_neph_conc_M",
+                         bc = "ECM_bc_conc_M", co = "CO_avg_ppm_M", stove = "h42_cook", smoke = "h42_smoke",
+                         coil = "h42_coil", trash = "h42_trash", kerosene = "h42_kero", incense = "h42_incence",                                   generator = "h42_generator", smoky = "h42_smoked", crop = "h42_crop", stove_other = "h42_smoky_kitc") %>% 
+  select(-c(concatenated, timepoint)) %>% 
+  mutate(arm = case_when(arm == 'R' ~ 'Control', arm == 'Q' ~ 'Intervention', TRUE ~ arm)) #Recode values from the 'arm' variable
+
+#Creating the dataframe for personal sample filters, and deleting the other columns with unnecessary filter IDs
+hapin_personal <- hapin %>% filter(filter_id %in% xrflist$filter_id) %>% 
+  select(-c(blank_filterid, dup1_filterid, dup2_filterid))
+
+#Creating the dataframe for duplicates in column 4, and deleting the other columns with unnecessary filter IDs, and renaming `dup1_filterid` to `filter_id`.
+hapin_dup1 <- hapin %>% filter(dup1_filterid %in% xrflist$filter_id) %>% 
+  select(-c(blank_filterid, filter_id, dup2_filterid)) %>% 
+  rename(filter_id = "dup1_filterid")
+
+#Creating the dataframe for duplicates in column 5, and deleting the other columns with unnecessary filter IDs, and renaming `dup2_filterid` to `filter_id`.
+hapin_dup2 <- hapin %>% filter(dup2_filterid %in% xrflist$filter_id) %>% 
+  select(-c(blank_filterid, filter_id, dup1_filterid)) %>% 
+  rename(filter_id = "dup2_filterid")
+
+#Creating the dataframe for blank filters, and deleting the other columns with unnecessary filter IDs, and renaming `blank_filterid` to `filter_id`.
+hapin_blanks <- hapin %>% filter(blank_filterid %in% xrflist$filter_id) %>% 
+  select(-c(filter_id, dup1_filterid, dup2_filterid)) %>% 
+  rename(filter_id = "blank_filterid")
+
+#Combining the `personal` and `dup` dataframes into a single one, using `bind_rows()`
+hapin_filters <- bind_rows(hapin_personal, hapin_dup1, hapin_dup2)
+
+#Save the samples and blanks dataframes to .RDS format files
+saveRDS(hapin_filters, file = here("data", "processed-data", "hapin_samples.rds"))
+saveRDS(hapin_blanks, file = here("data", "processed-data", "hapin_blanks.rds"))
+```
+
+### Chemical species Concentrations data cleaning
+
+```{r}
+#Loading the chemical species concentration data
+concentration <- read_excel(here("data", "raw-data", "conc_unc_hapingt_emollinedo.xlsx"), sheet = "Concentration")
+
+#Loading the chemical species limit of detection values
+lod <- read_excel(here("data", "raw-data", "conc_unc_hapingt_emollinedo.xlsx"), sheet = "DL")
+
+#having a glimpse of this dataframe
+glimpse(concentration)
+
+#Remove brackets, convert to numeric, and round to 4 decimal places
+concentration <- concentration %>%
+  mutate(across(3:26, ~ round(as.numeric(str_remove_all(., "\\[|\\]")), 4))) %>% 
+  rename(filter_id = "Filter")
+
+#Create dataframe with the concentrations for the blank filters for each element
+blanks <- concentration %>% filter(filter_id %in% hapin_blanks$filter_id) %>% 
+  select(-c(filter_id, Type))
+
+#Remove blank filters from the `concentration` dataframe
+concentration <- concentration %>%
+  anti_join(hapin_blanks, by = "filter_id")
+
+#Calculate the median for each element, using the blank filter values
+median_blanks <- blanks %>% select(Mg: Na) %>%
+  map_dbl(median) %>% round(4)
+
+median_blanks
+
+#Round the limit of detection values to 4 decimal places
+lod <- lod %>% mutate(`Concentration (ug/cm2)` = round(`Concentration (ug/cm2)`, 4))
+print(lod)
+
+#Estimate the percentage of values below detection limit for each element
+bdl <- concentration %>%
+  summarise(
+    percent_bdl_mg = sum(Mg < 0.0051) / n() * 100,
+    percent_bdl_al = sum(Al < 0.0059) / n() * 100,
+    percent_bdl_si = sum(Si < 0.0068) / n() * 100,
+    percent_bdl_s = sum(S < 0.0026) / n() * 100,
+    percent_bdl_k = sum(K < 0.0040) / n() * 100,
+    percent_bdl_ca = sum(Ca < 0.0040) / n() * 100,
+    percent_bdl_ti = sum(Ti < 0.0086) / n() * 100,
+    percent_bdl_cr = sum(Cr < 0.0055) / n() * 100,
+    percent_bdl_mn = sum(Mn < 0.0030) / n() * 100,
+    percent_bdl_fe = sum(Fe < 0.0043) / n() * 100,
+    percent_bdl_ni = sum(Ni < 0.0043) / n() * 100,
+    percent_bdl_cu = sum(Cu < 0.0080) / n() * 100,
+    percent_bdl_zn = sum(Zn < 0.0024) / n() * 100,
+    percent_bdl_ga = sum(Ga < 0.0049) / n() * 100,
+    percent_bdl_as = sum(As < 0.0062) / n() * 100,
+    percent_bdl_se = sum(Se < 0.0181) / n() * 100,
+    percent_bdl_cd = sum(Cd < 0.0932) / n() * 100,
+    percent_bdl_in = sum(In < 0.1089) / n() * 100,
+    percent_bdl_sn = sum(Sn < 0.1844) / n() * 100,
+    percent_bdl_te = sum(Te < 0.2166) / n() * 100,
+    percent_bdl_i = sum(I < 0.3149) / n() * 100,
+    percent_bdl_pb = sum(Pb < 0.0324) / n() * 100,)
+
+print(bdl)
+
+#Select only the filter ID, type and the 10 elements that have more than 50% of their data not below the detection limit
+concentration <- concentration %>% select(c(filter_id, Type, Mg, Al, Si, S, K, Ca, Ti, Mn, Fe, Zn)) %>% 
+  arrange(filter_id) #Also I decided to arrange them ascending based on the filter_id
+
+#Substract the median blank value for the elements that need blank adjustment
+concentration <- concentration %>%
+  mutate(Mg = Mg - 0.0112, S = S - 0.0044, K = K - 0.0014, Ca = Ca - 0.0048, Fe = Fe - 0.0038, Zn = Zn - 0.0045)
+
+#Replace all values below the detection limit with DL/sqrt(2)
+concentration <- concentration %>% 
+    mutate(Mg = round(if_else(Mg < 0.0051, 0.0051 / sqrt(2), Mg), 4), Al = round(if_else(Al < 0.0059, 0.0059 / sqrt(2), Al), 4),
+           Si = round(if_else(Si < 0.0068, 0.0068 / sqrt(2), Si), 4), S = round(if_else(S < 0.0026, 0.0026 / sqrt(2), S), 4),
+           K = round(if_else(K < 0.0016, 0.0016 / sqrt(2), K), 4), Ca = round(if_else(Ca < 0.0040, 0.0040 / sqrt(2), Ca), 4),
+           Ti = round(if_else(Ti < 0.0086, 0.0086 / sqrt(2), Ti), 4), Mn = round(if_else(Mn < 0.0030, 0.0030 / sqrt(2), Mn), 4),
+           Fe = round(if_else(Fe < 0.0043, 0.0043 / sqrt(2), Fe), 4), Zn = round(if_else(Zn < 0.0024, 0.0024 / sqrt(2), Zn), 4))
+
+#I will save these concentrations in a new dataframe `concentrations_ugcm2` that will be used for uncertainty estimations in future steps
+concentrations_ugcm2 <- concentration %>% select(-Type)
+
+#Converting the concentrations from (ug/cm2) to (ug/m3)
+concentration <- concentration %>%
+  mutate(across(Mg:Zn, ~ round(.x * 0.7853 / 0.43, 4)))
+
+#Now adding the BC concentrations value from the `hapin_filters` df
+hapin_filters <- hapin_filters %>% arrange(filter_id) #First arrange in ascending order by filter_id
+concentration <- bind_cols(concentration, hapin_filters$bc) %>% rename(BC = "...13") %>% select(-Type) #Join the BC concentrations to the `concentrations` df, also renaming the column to "BC" and deleting the 'Type' column
+
+#Add the `arm` and `fueltype` variables to the `concentration` dataframe
+concentration <- concentration %>%
+  mutate(arm = hapin_filters$arm, fueltype = hapin_filters$fueltype)
+
+#Check if there are any missing values from the concentration file
+gg_miss_var(concentration)
+
+#Use na.omit() to remove the spotted observation with missing value
+concentration <- na.omit(concentration)
+
+#Save this dataframe as RDS file
+saveRDS(concentration, file = here("data", "processed-data", "concentration.rds"))
+```
+
+### Chemical species Uncertainties data processing
+
+```{r}
+#Load the uncertainty data
+uncertainty <- read_excel(here("data", "raw-data", "conc_unc_hapingt_emollinedo.xlsx"), sheet = "Uncertainty")
+
+#Remove the chemical species with more than 50% of the observations with values BDL
+uncertainty <- uncertainty %>% select(c(Filter, Mg, Al, Si, S, K, Ca, Ti, Mn, Fe, Zn)) %>% #Select only the necessary variables
+  rename(filter_id = "Filter") %>% #Rename the Filter column
+  mutate_at(vars(Mg:Zn), ~ round(., 4)) %>% #Round the uncertainties to 4 decimal places
+  arrange(filter_id) %>% #Arrange observations based on Filter ID
+  anti_join(hapin_blanks, by = "filter_id") #Remove blank filters
+
+#Have a glimpse of the data
+glimpse(uncertainty)
+
+#Create a list for the detection limits for each element
+dl <- c(Mg = 0.0051, Al = 0.0059, Si = 0.0068, S = 0.0026, K = 0.0016, 
+        Ca = 0.0040, Ti = 0.0086, Mn = 0.0030, Fe = 0.0043, Zn = 0.0024)
+
+# Recalculate the values in df based on the conditions
+uncertainty <- uncertainty %>%
+  mutate(across(all_of(names(dl)),
+                ~ round(if_else(concentrations_ugcm2[[cur_column()]] < dl[[cur_column()]], (5/6) * dl[[cur_column()]], .), 4),
+                .names = "{.col}"))
+
+# Define the variables to be recalculated
+variables <- c('Mg', 'Al', 'Si', 'S', 'K', 'Ca', 'Ti', 'Mn', 'Fe', 'Zn')
+
+# Recalculate the values using the given equation
+uncertainty <- uncertainty %>%
+  mutate(across(all_of(variables), ~ round( #Here, selecting all the variables to be re-calculated
+    sqrt((0.7853/0.43)^2 * .^2 + (concentrations_ugcm2[[cur_column()]]/0.43)^2 * 0.05^2 + (-concentrations_ugcm2[[cur_column()]]*0.7853/0.43^2)^2 * (0.05 * 0.43)^2), 4), .names = "{.col}")) #Input the equation
+
+#Load file to estimate BC uncertainties
+atn <- read_csv(here("data", "raw-data", "ATN_summary.csv"))
+
+#Explore the structure of the file
+glimpse(atn)
+
+#Estimate total attenuation by sample
+atn <- atn %>% mutate(ATN = round(log(post_ATN/pre_ATN) *100, 2))
+
+#I will remove the observation with `filter_id` 3M53864 from the `uncertainty` df, since this observation does not have a BC concentration available
+uncertainty <- uncertainty %>% filter(filter_id != "3M53864") %>% 
+  mutate(BC = round((1370 * sqrt((atn$ATN)^2 * 0.000005^2 + 0.000079^2 * 1.16^2)), 4))#Estimate the BC uncertainties
+
+#I will remove the observation with `filter_id` 3M53864 from the `hapin_filters` df
+hapin_filters <- hapin_filters %>% filter(filter_id != "3M53864")
+
+#Add the `arm` and `fueltype` variables to the `uncertainty` dataframe
+uncertainty <- uncertainty %>%
+  mutate(arm = hapin_filters$arm, fueltype = hapin_filters$fueltype)
+
+#Save this dataframe as RDS file
+saveRDS(uncertainty, file = here("data", "processed-data", "uncertainty.rds"))
+```
+
+## Data Exploring
+
+First, I produced two boxplots, that summarize the concentrations categorized by `arm` and `fueltype`. First I will create a dataframe in longer format using `pivot_longer()`. Then creating the plots using `ggplot()`. In addition, I will add the significance test value to the plots to visualize which chemical species are statistically different among groups.
+
+```{r}
+#Pivot longer the `concentration` df to make the boxplots
+conc_longer <- concentration %>% #First a df with the `arm` variable
+  pivot_longer(cols = -c(filter_id, fueltype, arm),
+               names_to = "species", values_to = "concentration")
+
+#conduct the t-test of concentration-fueltype
+stat.test <- conc_longer %>% 
+  group_by(species) %>% 
+  t_test(concentration ~ fueltype) %>% 
+  add_significance() #to add the significance values
+
+#Add the position coordinates
+stat.test <- stat.test %>% 
+  add_x_position(x= "species", dodge = 0.8) %>% #x position is species, and the length of significance bar is 0.8
+  rstatix::add_y_position(y.trans = function(x){log10(x)}) #add y position, in this case specify using a function that it is in log10 scale
+
+#Creating the boxplot of concentrations by fueltype
+options(scipen = 999) #to remove scientific notation for smaller values (i.e. changes from 1*10-3 to 0.001)
+ggplot(conc_longer)+
+  geom_boxplot(aes(x= species, y= concentration, fill= fueltype))+
+  scale_fill_brewer(palette = "Paired")+
+  labs(x= "Chemical species", y= "Concentration (ug/m3)")+
+  scale_y_log10()+
+  guides(fill= guide_legend(title= "Fuel type"))+ #Change legend from fuel_type to Fuel type
+  theme_bw(base_size = 15)+
+  stat_pvalue_manual(stat.test, label = "p.signif", tip.length = 0.001) #Add the significance bars, use 'p.signif' to add *** or 'ns'
+
+#Creating the boxplot of concentrations by arm
+options(scipen = 999) #to remove scientific notation for smaller values (i.e. changes from 1*10-3 to 0.001)
+ggplot(conc_longer)+
+  geom_boxplot(aes(x= species, y= concentration, fill= arm))+
+  scale_fill_brewer(palette = "Paired")+
+  labs(x= "Chemical species", y= "Concentration (ug/m3)")+
+  scale_y_log10()+
+  guides(fill= guide_legend(title= "Study Arm"))+ #Change legend from fuel_type to Fuel type
+  theme_bw(base_size = 15)+
+  stat_pvalue_manual(stat.test, label = "p.signif", tip.length = 0.001) #Add the significance bars, use 'p.signif' to add *** or 'ns'
+```
+
+The boxplots for `fueltype` and `arm` show what I was expecting in terms of how the data is distributed. The concentrations seem higher in some elemental especies such as BC, Ca, K, Mg, Mn and S. The following steps will be to evaluate if those differences in concentrations are statistically different.
+
+And now producing summary statistics by type of fuel, using the `sumtable()` function.
+
+```{r}
+#Produce summary statistics by type of fuel
+#Remove arm and fueltype columns
+conc <- concentration %>% select(-arm)
+
+#Using the vtable package, which creates a table
+sumtable(conc, group = 'fueltype', group.long = T, add.median = T)
+```
+
+Now I created a correlation plot using the `corrplot()` function, to explore which elements could be more associated between each other.
+
+```{r}
+#First, delete unnecessary variables to conduct the correlation test
+cor <- concentration %>% select(-c(filter_id, fueltype, arm))
+
+#Perform the spearman correlation test
+cor <- stats::cor(cor, method = "pearson", use = "complete.obs") #I had to input the `use=` argument since there are missing values in the BC variable. I will correct them later.
+
+#Create the correlation plot
+corrplot(cor, method = "color", type = "lower", #Color form and displays at the lower portion
+         col = COL2("RdYlBu", 20), order = "hclust", #Color palette, and order or the species
+         tl.col = "orangered4", tl.srt = 0, tl.cex = 0.9,  #Color of the axis, position and size
+         addCoef.col = "gray10", number.font = 2, number.cex = 0.8, #Display correlation number, set the font and size
+         col.lim = c(0, 1), is.corr = T) #Set the color limits at the bar
+```
+
+The correlation plot above shows that Si and Fe are strongly correlated, which might suggest that these elements represent one specific source of pollution. Other high correlations observed are between Al and Si, and Fe and Ti.
+
+I produced a summary table of the uncertainties, using the `vtable` package.
+
+```{r}
+#Remove the `arm` variable
+unc_fuel <- uncertainty %>% select(-arm)
+
+#Use the `sumtable()` function from the `vtable` package, which creates a table
+sumtable(unc_fuel, group = 'fueltype', group.long = T, add.median = T, out = 'kable')
+
+#Remove the `fueltype` variable
+unc_arm <- uncertainty %>% select(-fueltype)
+
+#Use the `sumtable()` function from the `vtable` package, which creates a table
+sumtable(unc_arm, group = 'arm', group.long = T, add.median = T, out = 'kable')
+
+```
+
+The tables above are just a way to represent the summary statistics of the uncertainties, however, the uncertainties will only be useful for the PMF analysis after the conclusion of this project. One thing noticed also from this table, is that there are some infinite values from the BC concentrations, which also show that there are missing values that have to be corrected in earlier steps. From this tables we can also see that there are 376 observations from the 'Biomass' and 254 from the 'LPG' fueltypes. Meanwhile, there are 323 observations from the 'Control' arm and 307 from the 'Intervention' arm.
+
+Now, checking if there are missing values in the `hapin` dataframe for any of the observations using the `gg_miss_var()` function.
+
+```{r}
+gg_miss_var(hapin)
+```
+
+As seen above, there are some missing values from the observational exposures (kerosene to coil), there is just one missing observation for PM2.5 and BC concentrations and there is more than 30 missing observations for CO (carbon monoxide). The missing observation of BC might explain the missing value spotted before, so this observation might actually have to be dropped down.
+
+Now I created a barplot showing the distribution of responses for the categorical variables `kerosene`, `trash`, `stove_other`, `stove`, `smoky`, `incense`, `generator`, `smoke`, `crop`, and `coil`. First doing data manipulation so the df is useful for plotting.
+
+```{r}
+#Pivot longer the `hapin` df to make a barplot
+hapin_longer <- hapin %>%
+  select(c(`kerosene`, `trash`, `stove_other`, `stove`, `smoky`, `incense`, `generator`, `smoke`, `crop`, `coil`)) %>% #Here selecting only the necessary variables
+  pivot_longer(cols = everything(),
+               names_to = "exposure", values_to = "response") #Create the longer df
+
+#Create a simple barplot
+ggplot(hapin_longer, aes(x= exposure, fill= response))+
+  geom_bar(position = "dodge")+
+  theme_classic()
+```
+
+The bar plot shows that the majority of participants recorded to not being exposed to most of the exposures, except to `stove`, which is the stove that the participants use. Others also recorded that were exposed to other stoves, or to trash burning.
+
+And finally plotting the PM2.5, BC and CO concentrations in different graphs using `ggplot()`
+
+```{r}
+#Histogram plot for the PM2.5 concentrations
+ggplot(hapin, aes(x= pm25, fill= fueltype))+
+  geom_histogram()+
+  theme_classic()+
+  labs(x= "PM2.5 Concentration (ug/m3)")
+
+#Histogram plot for the BC concentrations
+ggplot(hapin, aes(x= bc, fill= fueltype))+
+  geom_histogram()+
+  theme_classic()+
+  labs(x= "Black Carbon Concentration (ug/m3)")
+
+#Histogram plot for the CO concentrations
+ggplot(hapin, aes(x= co, fill= fueltype))+
+  geom_histogram()+
+  theme_classic()+
+  labs(x= "Carbon Monoxide Concentration (ppm)")
+```
+
+The histograms for the concentration of the three pollutants show that they don't follow a normal distribution. Most of the concentrations are low, and it is also seen that overall the concentrations in the LPG fueltype are lower than the Biomass group. If these variables will be used for modeling purposes, they should be log-transformed or using a logistic regression approach.
+
+## Data Analysis
+
+To answer question 1, I will plot the correlations in a correlation plot using the `corrplot()` function. I used the previous code, since it was already developed, but editing to add more detail to the plot.
+
+```{r}
+#Create the correlation plot
+corrplot(cor, method = "color", type = "lower", #Color form and displays at the lower portion
+         col = COL2("RdYlBu", 20), order = "hclust", #Color palette, and order or the species
+         tl.col = "orangered4", tl.srt = 0, tl.cex = 1,  #Color of the axis, position and size
+         addCoef.col = "gray10", number.font = 2, number.cex = 0.8, #Display correlation number, set the font and size
+         col.lim = c(0, 1), is.corr = T) #Set the color limits at the bar
+```
+
+To answer question 2, I will conduct a T-test using the `tidymodels` package
+
+```{r}
+# Conduct T-tests for the chemical species based on 'fueltype'
+results <- map_dfr(2:12, function(i) { #To select columns that contain the variables to analyze
+  variable <- names(concentration)[i] #The dataframe where the name of the variables are
+  t_test <- t.test(reformulate('fueltype', response = variable), data = concentration) #Select the fueltype variable
+  
+  tibble( #Format the tibble
+    variable = variable,
+    statistic = t_test$statistic,
+    p_value = t_test$p.value,
+    estimate = t_test$estimate,
+    null_value = t_test$null.value,
+    alternative = t_test$alternative,
+    method = t_test$method,
+    conf_low = t_test$conf.int[1],
+    conf_high = t_test$conf.int[2]
+  )
+})
+
+results #Print the results as a tibble
+```
+
+To answer question 3, I will conduct a regression analysis. But first I will merge the data from `hapin_filters` with the `concentration` data.
+
+```{r}
+#remove the 'arm' and 'fueltype' variables from the 'concentration' df
+conc2 <- concentration %>% select(-c(arm, fueltype))
+
+#Use 'inner_join()' to merge dataframes
+hapin_merged <- inner_join(conc2, hapin_filters, by= "filter_id")
+
+#Save new df as a .RDS file
+saveRDS(hapin_merged, file = here("data", "processed-data", "hapin-final.rds"))
+```
+
+Now conducting the model selection using the `tidymodels` package. For the models, I used the gamma distribution family, since the concentrations of each chemical species could be explained by the gamma distribution. I used all the recorded exposures except incence and generator, since these had low variability in the answers.
+
+```{r}
+#First, loading the `tidymodels` package
+library(tidymodels)
+
+# Create a generalized linear regression model specification using gamma distribution (This will be used for all the models)
+model_spec <- linear_reg(mode = "regression") %>%
+  set_engine("glm", family = Gamma(link = "log"))
+
+###########To predict the BC variable##############
+# Create the recipe for preprocessing
+recipeBC <- recipe(BC ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowBC <- workflow() %>%
+  add_recipe(recipeBC) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitBC <- workflowBC %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsBC <- fitBC %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsBC)
+
+###########To predict the Ca variable##############
+# Create the recipe for preprocessing
+recipeCa <- recipe(Ca ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowCa <- workflow() %>%
+  add_recipe(recipeCa) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitCa <- workflowCa %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsCa <- fitCa %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsCa)
+
+###########To predict the K variable##############
+# Create the recipe for preprocessing
+recipeK <- recipe(K ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowK <- workflow() %>%
+  add_recipe(recipeK) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitK <- workflowK %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsK <- fitK %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsK)
+
+###########To predict the Mg variable##############
+# Create the recipe for preprocessing
+recipeMg <- recipe(Mg ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowMg <- workflow() %>%
+  add_recipe(recipeMg) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitMg <- workflowMg %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsMg <- fitMg %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsMg)
+
+###########To predict the Mn variable##############
+# Create the recipe for preprocessing
+recipeMn <- recipe(Mn ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowMn <- workflow() %>%
+  add_recipe(recipeMn) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitMn <- workflowMn %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsMn <- fitMn %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsMn)
+
+###########To predict the S variable##############
+# Create the recipe for preprocessing
+recipeSul <- recipe(S ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowSul <- workflow() %>%
+  add_recipe(recipeSul) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitSul <- workflowSul %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsSul <- fitSul %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsSul)
+
+###########To predict the Al variable##############
+# Create the recipe for preprocessing
+recipeAl <- recipe(Al ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowAl <- workflow() %>%
+  add_recipe(recipeAl) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitAl <- workflowAl %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsAl <- fitAl %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsAl)
+
+###########To predict the Fe variable##############
+# Create the recipe for preprocessing
+recipeFe <- recipe(Fe ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowFe <- workflow() %>%
+  add_recipe(recipeFe) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitFe <- workflowFe %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsFe <- fitFe %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsFe)
+
+###########To predict the Si variable##############
+# Create the recipe for preprocessing
+recipeSi <- recipe(Si ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowSi <- workflow() %>%
+  add_recipe(recipeSi) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitSi <- workflowSi %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsSi <- fitSi %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsSi)
+
+###########To predict the Ti variable##############
+# Create the recipe for preprocessing
+recipeTi <- recipe(Ti ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowTi <- workflow() %>%
+  add_recipe(recipeTi) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitTi <- workflowTi %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsTi <- fitTi %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsTi)
+
+###########To predict the Zn variable##############
+# Create the recipe for preprocessing
+recipeZn <- recipe(Zn ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowZn <- workflow() %>%
+  add_recipe(recipeZn) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitZn <- workflowZn %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsZn <- fitZn %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsZn)
+```
+
+Based on the previous models, it seems like the most important variables are `fueltype` (as expected), `kerosene`, `stove_other` and `smoke` depending on the chemical species. So I will test new regression models for all species (except Al and Zn, since they seem not to be explained by any of the exposures), using only their most significant predictors.
+
+```{r}
+###########To predict the BC variable##############
+# Create the recipe for preprocessing
+recipeBC_red <- recipe(BC ~ kerosene + stove_other + fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowBC_red <- workflow() %>%
+  add_recipe(recipeBC_red) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitBC_red <- workflowBC_red %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsBC_red <- fitBC_red %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsBC_red)
+
+###########To predict the Ca variable##############
+# Create the recipe for preprocessing
+recipeCa_red <- recipe(Ca ~ fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowCa_red <- workflow() %>%
+  add_recipe(recipeCa_red) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitCa_red <- workflowCa_red %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsCa_red <- fitCa_red %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsCa_red)
+
+###########To predict the K variable##############
+# Create the recipe for preprocessing
+recipeK_red <- recipe(K ~ smoke + stove_other + fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowK_red <- workflow() %>%
+  add_recipe(recipeK_red) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitK_red <- workflowK_red %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsK_red <- fitK_red %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsK_red)
+
+###########To predict the Mg variable##############
+# Create the recipe for preprocessing
+recipeMg_red <- recipe(Mg ~ kerosene + fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowMg_red <- workflow() %>%
+  add_recipe(recipeMg_red) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitMg_red <- workflowMg_red %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsMg_red <- fitMg_red %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsMg_red)
+
+###########To predict the Mn variable##############
+# Create the recipe for preprocessing
+recipeMn_red <- recipe(Mn ~ fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowMn_red <- workflow() %>%
+  add_recipe(recipeMn_red) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitMn_red <- workflowMn_red %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsMn_red <- fitMn_red %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsMn_red)
+
+###########To predict the S variable##############
+# Create the recipe for preprocessing
+recipeS_red <- recipe(S ~ fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowS_red <- workflow() %>%
+  add_recipe(recipeS_red) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitS_red <- workflowS_red %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsS_red <- fitS_red %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsS_red)
+
+###########To predict the Fe variable##############
+# Create the recipe for preprocessing
+recipeFe_red <- recipe(Fe ~ stove, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowFe_red <- workflow() %>%
+  add_recipe(recipeFe_red) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitFe_red <- workflowFe_red %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsFe_red <- fitFe_red %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsFe_red)
+
+###########To predict the Si variable##############
+# Create the recipe for preprocessing
+recipeSi_red <- recipe(Si ~ fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowSi_red <- workflow() %>%
+  add_recipe(recipeSi_red) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitSi_red <- workflowSi_red %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsSi_red <- fitSi_red %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsSi_red)
+
+###########To predict the Ti variable##############
+# Create the recipe for preprocessing
+recipeTi_red <- recipe(Ti ~ fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowTi_red <- workflow() %>%
+  add_recipe(recipeTi_red) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitTi_red <- workflowTi_red %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsTi_red <- fitTi_red %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsTi_red)
+```
+
+In this part I will evaluate both models from each chemical species (TBD)
+
+```{r}
+
+```
+

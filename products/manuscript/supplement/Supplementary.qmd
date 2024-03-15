@@ -1,0 +1,240 @@
+---
+title: "Supplementary Material"
+subtitle: "Project: Part 3"
+author: Erick E. Mollinedo
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+format:
+  docx:
+    toc: false
+    number-sections: true
+    highlight-style: github
+---
+
+```{r include=FALSE}
+library(tidyverse)
+library(tidymodels)
+library(here)
+library(readr)
+```
+
+# Supplementary Material
+
+The following document includes some of the results from the exploratory data analysis.
+
+
+## Supplementary Results
+
+@fig-conc shows the summary of concentrations for each chemical species categorized by study arm. It is observed a similar pattern observed from the categorization by type of fuel, where Mg, Mn, Ca, K, BC, Ti, Si and S have statistically significant differences in concentrations (shown as ****).
+
+![Chemical species concentrations by study arm](../../../results/figures/boxplot-arm.jpg){#fig-conc}
+
+In terms of the categorical exposures @fig-cat summarizes the responses from all the exposures. It is observed that for the incence and generator variables there were just a few or none observations that recorded being exposed to these sources. Meanwhile, stove usage was the exposure most recorded.
+
+![Summary of categorical exposures](../../../results/figures/cat-exposures.jpg){#fig-cat}
+
+The following figures show the distribution of the concentrations of Carbon monoxide (@fig-co) and PM~2.5~ (@fig-pm), which were considered as covariates (CO) or independent variables (PM~2.5~) to be included in the modelling process with the categorical exposures.
+
+![Carbon Monoxide concentrations by type of fuel](../../../results/figures/co.jpg){#fig-co}
+
+![PM2.5 concentrations by type of fuel](../../../results/figures/pm25.jpg){#fig-pm}
+
+The following tables show the results when conducting the generalized linear models using a single or multiple variables for the chemical species that can be interpreted by sources of exposure.
+
+```{r echo=FALSE}
+#Open the hapin_merged df
+
+hapin_merged <- read_csv(here("data", "processed-data", "hapin-merged.csv"))
+
+# Create a generalized linear regression model specification using gamma distribution (This will be used for all the models)
+model_spec <- linear_reg(mode = "regression") %>%
+  set_engine("glm", family = Gamma(link = "log"))
+
+###########To predict the BC variable##############
+# Create the recipe for preprocessing
+recipeBC_red <- recipe(BC ~ kerosene + stove_other + fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowBC_red <- workflow() %>%
+  add_recipe(recipeBC_red) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitBC_red <- workflowBC_red %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsBC_red <- fitBC_red %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsBC_red)
+
+###########To predict the Ca variable##############
+# Create the recipe for preprocessing
+recipeCa_red <- recipe(Ca ~ fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowCa_red <- workflow() %>%
+  add_recipe(recipeCa_red) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitCa_red <- workflowCa_red %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsCa_red <- fitCa_red %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsCa_red)
+
+###########To predict the K variable##############
+# Create the recipe for preprocessing
+recipeK_red <- recipe(K ~ smoke + stove_other + fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowK_red <- workflow() %>%
+  add_recipe(recipeK_red) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitK_red <- workflowK_red %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsK_red <- fitK_red %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsK_red)
+
+###########To predict the Mg variable##############
+# Create the recipe for preprocessing
+recipeMg_red <- recipe(Mg ~ kerosene + fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowMg_red <- workflow() %>%
+  add_recipe(recipeMg_red) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitMg_red <- workflowMg_red %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsMg_red <- fitMg_red %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsMg_red)
+
+###########To predict the Mn variable##############
+# Create the recipe for preprocessing
+recipeMn_red <- recipe(Mn ~ fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowMn_red <- workflow() %>%
+  add_recipe(recipeMn_red) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitMn_red <- workflowMn_red %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsMn_red <- fitMn_red %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsMn_red)
+
+###########To predict the S variable##############
+# Create the recipe for preprocessing
+recipeS_red <- recipe(S ~ fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowS_red <- workflow() %>%
+  add_recipe(recipeS_red) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitS_red <- workflowS_red %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsS_red <- fitS_red %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsS_red)
+
+###########To predict the Fe variable##############
+# Create the recipe for preprocessing
+recipeFe_red <- recipe(Fe ~ stove, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowFe_red <- workflow() %>%
+  add_recipe(recipeFe_red) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitFe_red <- workflowFe_red %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsFe_red <- fitFe_red %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsFe_red)
+
+###########To predict the Si variable##############
+# Create the recipe for preprocessing
+recipeSi_red <- recipe(Si ~ fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowSi_red <- workflow() %>%
+  add_recipe(recipeSi_red) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitSi_red <- workflowSi_red %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsSi_red <- fitSi_red %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsSi_red)
+
+###########To predict the Ti variable##############
+# Create the recipe for preprocessing
+recipeTi_red <- recipe(Ti ~ fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+# Create a workflow
+workflowTi_red <- workflow() %>%
+  add_recipe(recipeTi_red) %>%
+  add_model(model_spec)
+
+# Fit the model to the data
+fitTi_red <- workflowTi_red %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsTi_red <- fitTi_red %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsTi_red)
+```

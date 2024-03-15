@@ -13,6 +13,7 @@ Packages needed for data cleaning and data exploration
 library(here)
 library(readxl)
 library(tidyverse)
+library(naniar)
 ```
 
 ## HAPIN Guatemala data cleaning
@@ -240,6 +241,19 @@ I will add the fueltype and arm variables to this dataframe, and then I'll save 
 #Add the `arm` and `fueltype` variables to the `concentration` dataframe
 concentration <- concentration %>%
   mutate(arm = hapin_filters$arm, fueltype = hapin_filters$fueltype)
+```
+
+I used the `gg_miss_var()` function to check if there are any missing values from the concentrations file. (For the purpose of the final project and the personal project, any missing values will have to be removed).
+
+```{r}
+gg_miss_var(concentration)
+```
+
+There is one missing value from the `BC` variable. After doing some research, there is no record that the data information from this filter is available, so the best decision was to drop this value. And then, save the df to an RDS file.
+
+```{r}
+#Use na.omit() to remove the observation with missing value
+concentration <- na.omit(concentration)
 
 #Save this dataframe as RDS file
 saveRDS(concentration, file = here("data", "processed-data", "concentration.rds"))
@@ -296,7 +310,7 @@ Since the BC concentrations will also be included, I need to estimate the BC unc
 
 ```{r}
 #Load file to estimate BC uncertainties
-atn <- read_csv(here("data", "raw-data", "ATN_summary_SA.csv"))
+atn <- read_csv(here("data", "raw-data", "ATN_summary.csv"))
 
 #Explore the structure of the file
 glimpse(atn)
@@ -312,14 +326,17 @@ atn <- atn %>% mutate(ATN = round(log(post_ATN/pre_ATN) *100, 2))
 And finally, estimate the BC uncertainties using an equation also derived from the lag of propagation of uncertainties.
 
 ```{r}
-#Estimate the BC uncertainties
-uncertainty <- uncertainty %>% 
-  mutate(BC = round((1370 * sqrt((atn$ATN)^2 * 0.000005^2 + 0.000079^2 * 1.16^2)), 4))
+#First I will remove the observation with `filter_id` 3M53864 from the `uncertainty` df, since this observation does not have a BC concentration available
+uncertainty <- uncertainty %>% filter(filter_id != "3M53864") %>% 
+  mutate(BC = round((1370 * sqrt((atn$ATN)^2 * 0.000005^2 + 0.000079^2 * 1.16^2)), 4))#Estimate the BC uncertainties
 ```
 
 I will also add the arm and fueltype variables to this dataframe, and I'll save it as RDS format.
 
 ```{r}
+#First I will remove the observation with `filter_id` 3M53864 from the `hapin_filters` df
+hapin_filters <- hapin_filters %>% filter(filter_id != "3M53864")
+
 #Add the `arm` and `fueltype` variables to the `uncertainty` dataframe
 uncertainty <- uncertainty %>%
   mutate(arm = hapin_filters$arm, fueltype = hapin_filters$fueltype)

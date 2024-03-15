@@ -18,6 +18,8 @@ library(corrplot)
 library(tidyverse)
 library(RColorBrewer)
 library(naniar)
+library(ggpubr)
+library(rstatix)
 ```
 
 Load the `concentration` file.
@@ -26,7 +28,7 @@ Load the `concentration` file.
 concentration <- read_rds(here("data", "processed-data", "concentration.rds"))
 ```
 
-I will produce two boxplots, that summarize the concentrations categorized by `arm` and `fueltype`. First I will create a dataframe in longer format using `pivot_longer()`. Then creating the plots using `ggplot()`.
+I will produce two boxplots, that summarize the concentrations categorized by `arm` and `fueltype`. First I will create a dataframe in longer format using `pivot_longer()`. Then creating the plots using `ggplot()`. In addition, I will add the significance test value to the plots to visualize which chemical species are statistically different among groups.
 
 ```{r}
 #Pivot longer the `concentration` df to make the boxplots
@@ -34,28 +36,52 @@ conc_longer <- concentration %>% #First a df with the `arm` variable
   pivot_longer(cols = -c(filter_id, fueltype, arm),
                names_to = "species", values_to = "concentration")
 
+#conduct the t-test of concentration-fuel_type
+stat.test <- conc_longer %>% 
+  group_by(species) %>% 
+  t_test(concentration ~ fueltype) %>% 
+  add_significance() #to add the significance values
+
+#Add the position coordinates
+stat.test <- stat.test %>% 
+  add_x_position(x= "species", dodge = 0.8) %>% #x position is species, and the length of significance bar is 0.8
+  add_y_position(y.trans = function(x){log10(x)}) #add y position, in this case specify using a function that it is in log10 scale
+
 #Creating the boxplot of concentrations by fueltype
 options(scipen = 999) #to remove scientific notation for smaller values (i.e. changes from 1*10-3 to 0.001)
 ggplot(conc_longer)+
   geom_boxplot(aes(x= species, y= concentration, fill= fueltype))+
   scale_fill_brewer(palette = "Paired")+
-  labs(x= "Elemental species", y= "Concentration (ug/m3)")+
+  labs(x= "Chemical species", y= "Concentration (ug/m3)")+
   scale_y_log10()+
   guides(fill= guide_legend(title= "Fuel type"))+ #Change legend from fuel_type to Fuel type
-  theme_bw(base_size = 15)
+  theme_bw(base_size = 15)+
+  stat_pvalue_manual(stat.test, label = "p.signif", tip.length = 0.001) #Add the significance bars, use 'p.signif' to add *** or 'ns'
 
 #Creating the boxplot of concentrations by arm
 options(scipen = 999) #to remove scientific notation for smaller values (i.e. changes from 1*10-3 to 0.001)
 ggplot(conc_longer)+
   geom_boxplot(aes(x= species, y= concentration, fill= arm))+
   scale_fill_brewer(palette = "Paired")+
-  labs(x= "Elemental species", y= "Concentration (ug/m3)")+
+  labs(x= "Chemical species", y= "Concentration (ug/m3)")+
   scale_y_log10()+
   guides(fill= guide_legend(title= "Study Arm"))+ #Change legend from fuel_type to Fuel type
-  theme_bw(base_size = 15)
+  theme_bw(base_size = 15)+
+  stat_pvalue_manual(stat.test, label = "p.signif", tip.length = 0.001) #Add the significance bars, use 'p.signif' to add *** or 'ns'
 ```
 
 The boxplots for `fueltype` and `arm` show what I was expecting in terms of how the data is distributed. The concentrations seem higher in some elemental especies such as BC, Ca, K, Mg, Mn and S. The following steps will be to evaluate if those differences in concentrations are statistically different.
+
+And now producing summary statistics by type of fuel, using the `sumtable()` function.
+
+```{r}
+#Produce summary statistics by type of fuel
+#Remove arm and fueltype columns
+conc <- concentration %>% select(-arm)
+
+#Using the vtable package, which creates a table
+sumtable(conc, group = 'fueltype', group.long = T, add.median = T)
+```
 
 Now I will create a correlation plot using the `corrplot()` function, to explore which elements could be more associated between each other.
 
