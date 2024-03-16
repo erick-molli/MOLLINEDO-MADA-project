@@ -7,7 +7,7 @@ format: html
 editor: visual
 ---
 
-List of packages needed for the whole data processing/data analysis
+List of packages needed for the whole data processing and data analysis
 
 ```{r}
 library(here)
@@ -21,7 +21,7 @@ library(ggpubr)
 library(rstatix)
 ```
 
-##Data Cleaning
+## Data Cleaning
 
 ### HAPIN Guatemala data cleaning
 
@@ -895,4 +895,3 @@ In this part I will evaluate both models from each chemical species (TBD)
 ```{r}
 
 ```
-

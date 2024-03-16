@@ -2,7 +2,7 @@
 
 This is Erick Mollinedo's class project repository.
 
-# Template structure
+## Template structure
 
 * All data goes into the subfolders inside the `data` folder.
 * All code goes into the `code` folder or subfolders.
@@ -12,7 +12,9 @@ This is Erick Mollinedo's class project repository.
 used to keep track of packages.
 * See the various `README.md` files in those folders for some more information.
 
+## To Run the script
 
+To run the whole analysis, I placed all the code chunks under the `data_analysis_code.qmd` file under the `code` folder. This file should run smoothly if running the chunks in order. For a more descriptive detail on the data cleaning/exploratory analysis there are separate files under the `code` folder.
 
 
 
