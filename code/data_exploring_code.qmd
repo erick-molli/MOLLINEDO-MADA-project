@@ -162,6 +162,24 @@ ggplot(hapin_longer, aes(x= exposure, fill= response))+
 
 The bar plot shows that the majority of participants recorded to not being exposed to most of the exposures, except to `stove`, which is the stove that the participants use. Others also recorded that were exposed to other stoves, or to trash burning.
 
+Given that some of the categories have very low responses, I decided to combine some categories to have a greater variability in the exposures and then explore if these are good when modelling.
+
+```{r}
+#Combine some exposures to new categories
+hapin <- hapin %>%
+  mutate(micro_exposures = if_else( #The micro_exposures variable will include 'smoke', 'coil', 'incense' and 'kerosene'
+    (smoke == "Yes" | coil == "Yes" | incense == "Yes" | kerosene == "Yes"),
+    "Yes", "No", missing = "No"
+  )) %>%
+  mutate(macro_exposures = if_else( #The macro_exposures variable will include 'trash' and 'crop'
+    (trash == "Yes" | crop == "Yes"),
+    "Yes", "No", missing = "No"
+  ))
+
+#Save this as a new .RDS file
+saveRDS(hapin, file = here("data", "processed-data", "hapin_samples.rds"))
+```
+
 And finally plotting the PM2.5, BC and CO concentrations in different graphs using `ggplot()`
 
 ```{r}

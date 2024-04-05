@@ -1,3 +1,1 @@
-Folder for all figures.
-
-You can create further sub-folders if that makes sense.
+This folder contains all the figures that are referenced in the Manuscript or Supplementary documents.

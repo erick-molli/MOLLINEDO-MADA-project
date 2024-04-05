@@ -1,3 +1,2 @@
-Folder for all tables (generally stored as Rds files)
-
-You can create further sub-folders if that makes sense.
+This folder contains all the tables generated from any of the codes.
+The tables will be referenced in the Manuscript or Supplementary documents.

@@ -1,6 +1,6 @@
 ---
 title: "Elemental characterization of personal filter samples from the Household Air Pollution Intervention Network (HAPIN) trial for Source Apportionment"
-subtitle: "Project: Part 3"
+subtitle: "Project: Part 4"
 author: Erick E. Mollinedo
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
 format:
@@ -56,9 +56,11 @@ The uncertainties were processed by, first removing all the chemical species tha
 
 ### Statistical analysis
 
-The correlation (r^2^) between chemical species will be determined using either individual paired correlations or by a correlation plot matrix. Additional plots, such as boxplots, to visualize and compare how the concentrations differ by type of fuel. These differences will be assessed for statistical significance using a Welch two-sample T-test. Multivariate regression models will be computed to analyze which exposures could explain the concentrations of the key chemical species. Given that the concentrations can be approximated to a gamma distribution, the generalized linear model with gamma distribution will be used to compute the models. The root mean square error (RMSE) and R-squared will be the parameters to evaluate the most fit model for each of the chemical species.
+The correlation (r^2^) between chemical species were determined using paired correlations in a correlation plot matrix. To assess differences in concentrations between samples by type of fuel, a Welch two-sample T-test was computed. Additional plots were presented to visualize those differences between samples.
 
-## Preliminary Results
+Multivariate regression models were computed for each one of the key chemical species to assess which exposures are likely to explain the variations in their concentrations. Given that there is low variability in the answers for some of the categorical exposures, in addition to computing a multivariate model with all the predictors, another model was evaluated. This second model considers other stoves and fueltype as predictors, alongside a new combined variable called 'micro exposures' that englobes exposures to kerosene, cigarette, coils and incense and the variable 'macro exposures' which englobes exposures to trash burning and crop residues. Given that the concentrations can be approximated to a gamma distribution, the generalized linear model with gamma distribution was used to compute the models. The root mean square error (RMSE) and R-squared were the metric parameters to evaluate which one of both models for all chemical species fits best.
+
+## Results
 
 Six hundred and twenty-nine filter samples were considered in the final analyses. @fig-stats1 presents a summary of the concentrations from the biomass fueltype samples. Meanwhile @fig-stats2 shows the summary of concentrations from the LPG observations. As a note, all the observations of the baseline measurements were categorized as biomass fuel type, since at this point, the LPG intervention was not yet allocated.
 
@@ -74,15 +76,25 @@ In terms of correlations, Spearman correlation was estimated between all the che
 
 ### Chemical species concentrations
 
-The concentration of the chemical species are distributed in different ranges depending on their type. For example, the highest concentrations were determined to be for Black carbon (BC), with values from 1 to 100 ug/m^3^. The remaining chemical species have lower concentrations, ranging from less than 0.1 ug/m^3^ to 10 ug/m^3^. Other noticeable patterns is that some of the species were found in higher concentrations for personal samples from participants that used biomass stoves, compared to LPG stoves (@fig-concentrations). When conducting the two-sided T-test, it was determined that all of the chemical species, except Fe, Al and Zn were statistically significantly different between type of fuel. The differences in concentrations were also analyzed by study arm, however, given that all baseline measurements belonged to biomass fueltype observations, these results were not presented but can be observed in the Supplementary material.
+The concentration of the chemical species are distributed in different ranges depending on their type. For example, the highest concentrations were determined to be for Black carbon (BC), with values from 1 to 100 ug/m^3^. The remaining chemical species have lower concentrations, ranging from less than 0.1 ug/m^3^ to 10 ug/m^3^. Other noticeable patterns is that some of the species were found in higher concentrations for personal samples from participants that used biomass stoves, compared to LPG stoves (@fig-concentrations). When conducting the two-sided T-test, it was determined that all of the chemical species, except Fe, Al and Zn were significantly different between type of fuel. The differences in concentrations were also analyzed by study arm, however, given that all baseline measurements belonged to biomass fueltype observations, these results were not presented but can be observed in the Supplementary material.
 
 ![Chemical species concentrations by type of fuel](../../results/figures/boxplot-fueltype.jpg){#fig-concentrations}
 
-### Chemical species prediction
+### Chemical species models
 
-Nine of the eleven exposures were evaluated as predictors of the chemical species concentrations. The use of a generator machine (for corn mill grinding) and incence were left out since these were the categorical exposure variables with the less variability in answers. The gamma distributed generalized linear models were chosen given the concentrations of all the species do not follow a normal distribution.
+Model 1, for each one of the chemical species, was computed to determine which of the exposures could better explain the variations in the concentrations (Supplementary Material). Given that none of the observations recorded to have used a generator machine for corn mill grinding, this categorical variable was left out. When computing this model, none of the predictors were significant to predict the concentrations of Aluminim (Al), Iron (Fe) and Zinc (Zn). Kerosene was found a significant predictor of Black carbon (BC) and Magnesium (Mg) concentrations (p < 0.05). Exposure to smoke emitted from a biomass stove other than the one in their homes was also found as a significant predictor (p < 0.05) for BC and potassium (K). Also, exposure to cigarette smoke in the homes was associated to K concentration. Meanwhile, the strongest predictor was found to be type of fuel (p < 0.01), where exposure to biomass fuel was associated to an increase of the concentration of BC, Ca, K, Mg, Mn, S, Si and Ti. These last results are consistent to what was observed in terms of significant differences among samples by type of fuel (@fig-concentrations).
 
-Based on the models, type of fuel was a strong predictor of concentration for eight chemical species: Mg, Mn, BC, Ca, K, S, Si and Ti. Kerosene was another predictor of BC and Mg concentrations alongside type of fuel and being exposed to other sources of smoke (such as traffic emissions). Meanwhile, smoking and other sources of smoke were high predictors of K. On the other hand, stove usage, independently if it is biomass or LPG, was associated with concentration of Fe. However, additional analyses have to be conducted for final model selection.
+Model 2 was tested as another way to evaluate which predictors could explain the variations in concentrations by grouping certain exposures. Similar results were observed as from Model 1. Micro exposures, which is a category that includes smoking, incense use, kerosene and mosquito coils explained the variations in BC concentrations (p < 0.05). Exposure to other biomass stoves was a predictor for BC and K (p < 0.05). Fueltype was still the strongest predictor (p < 0.01) for the variations in concentrations for BC, Ca, K, Mg, Mn, S, Si and Ti.
+
+In terms of comparison between models, both models seem to under-perform in terms of predictions (Table 1, Supplementary Material). The lowest RMSE was observed in Model 2 for all the chemical species, meanwhile the highest R-square was observed in Model 1. In this case, Model 2 with grouping of variables could be a better model to explain the effect of certain exposures to the concentrations of the selected chemical species.
+
+
+## Discussion
+
+
+
+## Conclusions
+
 
 {{< pagebreak >}}
 

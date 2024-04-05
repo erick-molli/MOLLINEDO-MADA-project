@@ -1,6 +1,6 @@
 ---
 title: "Supplementary Material"
-subtitle: "Project: Part 3"
+subtitle: "Project: Part 4"
 author: Erick E. Mollinedo
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
 format:
@@ -15,6 +15,7 @@ library(tidyverse)
 library(tidymodels)
 library(here)
 library(readr)
+library(gt)
 ```
 
 # Supplementary Material
@@ -43,198 +44,218 @@ The following tables show the results when conducting the generalized linear mod
 ```{r echo=FALSE}
 #Open the hapin_merged df
 
-hapin_merged <- read_csv(here("data", "processed-data", "hapin-merged.csv"))
+hapin_merged <- read_rds(here("data", "processed-data", "hapin-final.rds"))
 
 # Create a generalized linear regression model specification using gamma distribution (This will be used for all the models)
-model_spec <- linear_reg(mode = "regression") %>%
+gamma_spec <- linear_reg(mode = "regression") %>%
   set_engine("glm", family = Gamma(link = "log"))
+
+###########To predict the Al variable##############
+# Create the recipe for preprocessing
+recipeAl <- recipe(Al ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+#Fit the model
+fitAl <- workflow() %>%
+  add_recipe(recipeAl) %>%
+  add_model(gamma_spec) %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsAl <- fitAl %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsAl)
 
 ###########To predict the BC variable##############
 # Create the recipe for preprocessing
-recipeBC_red <- recipe(BC ~ kerosene + stove_other + fueltype, data = hapin_merged) %>%
+recipeBC <- recipe(BC ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
   step_dummy(all_nominal(), -all_outcomes())
 
-# Create a workflow
-workflowBC_red <- workflow() %>%
-  add_recipe(recipeBC_red) %>%
-  add_model(model_spec)
-
-# Fit the model to the data
-fitBC_red <- workflowBC_red %>%
+#Fit the model
+fitBC <- workflow() %>%
+  add_recipe(recipeBC) %>%
+  add_model(gamma_spec) %>%
   fit(data = hapin_merged)
 
 # Extract and print the results of the model
-resultsBC_red <- fitBC_red %>%
+resultsBC <- fitBC %>%
   pull_workflow_fit() %>%
   tidy()
 
-print(resultsBC_red)
+print(resultsBC)
 
 ###########To predict the Ca variable##############
 # Create the recipe for preprocessing
-recipeCa_red <- recipe(Ca ~ fueltype, data = hapin_merged) %>%
+recipeCa <- recipe(Ca ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
   step_dummy(all_nominal(), -all_outcomes())
 
-# Create a workflow
-workflowCa_red <- workflow() %>%
-  add_recipe(recipeCa_red) %>%
-  add_model(model_spec)
-
-# Fit the model to the data
-fitCa_red <- workflowCa_red %>%
+#Fit the model
+fitCa <- workflow() %>%
+  add_recipe(recipeCa) %>%
+  add_model(gamma_spec) %>%
   fit(data = hapin_merged)
 
 # Extract and print the results of the model
-resultsCa_red <- fitCa_red %>%
+resultsCa <- fitCa %>%
   pull_workflow_fit() %>%
   tidy()
 
-print(resultsCa_red)
-
-###########To predict the K variable##############
-# Create the recipe for preprocessing
-recipeK_red <- recipe(K ~ smoke + stove_other + fueltype, data = hapin_merged) %>%
-  step_dummy(all_nominal(), -all_outcomes())
-
-# Create a workflow
-workflowK_red <- workflow() %>%
-  add_recipe(recipeK_red) %>%
-  add_model(model_spec)
-
-# Fit the model to the data
-fitK_red <- workflowK_red %>%
-  fit(data = hapin_merged)
-
-# Extract and print the results of the model
-resultsK_red <- fitK_red %>%
-  pull_workflow_fit() %>%
-  tidy()
-
-print(resultsK_red)
-
-###########To predict the Mg variable##############
-# Create the recipe for preprocessing
-recipeMg_red <- recipe(Mg ~ kerosene + fueltype, data = hapin_merged) %>%
-  step_dummy(all_nominal(), -all_outcomes())
-
-# Create a workflow
-workflowMg_red <- workflow() %>%
-  add_recipe(recipeMg_red) %>%
-  add_model(model_spec)
-
-# Fit the model to the data
-fitMg_red <- workflowMg_red %>%
-  fit(data = hapin_merged)
-
-# Extract and print the results of the model
-resultsMg_red <- fitMg_red %>%
-  pull_workflow_fit() %>%
-  tidy()
-
-print(resultsMg_red)
-
-###########To predict the Mn variable##############
-# Create the recipe for preprocessing
-recipeMn_red <- recipe(Mn ~ fueltype, data = hapin_merged) %>%
-  step_dummy(all_nominal(), -all_outcomes())
-
-# Create a workflow
-workflowMn_red <- workflow() %>%
-  add_recipe(recipeMn_red) %>%
-  add_model(model_spec)
-
-# Fit the model to the data
-fitMn_red <- workflowMn_red %>%
-  fit(data = hapin_merged)
-
-# Extract and print the results of the model
-resultsMn_red <- fitMn_red %>%
-  pull_workflow_fit() %>%
-  tidy()
-
-print(resultsMn_red)
-
-###########To predict the S variable##############
-# Create the recipe for preprocessing
-recipeS_red <- recipe(S ~ fueltype, data = hapin_merged) %>%
-  step_dummy(all_nominal(), -all_outcomes())
-
-# Create a workflow
-workflowS_red <- workflow() %>%
-  add_recipe(recipeS_red) %>%
-  add_model(model_spec)
-
-# Fit the model to the data
-fitS_red <- workflowS_red %>%
-  fit(data = hapin_merged)
-
-# Extract and print the results of the model
-resultsS_red <- fitS_red %>%
-  pull_workflow_fit() %>%
-  tidy()
-
-print(resultsS_red)
+print(resultsCa)
 
 ###########To predict the Fe variable##############
 # Create the recipe for preprocessing
-recipeFe_red <- recipe(Fe ~ stove, data = hapin_merged) %>%
+recipeFe <- recipe(Fe ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
   step_dummy(all_nominal(), -all_outcomes())
 
-# Create a workflow
-workflowFe_red <- workflow() %>%
-  add_recipe(recipeFe_red) %>%
-  add_model(model_spec)
-
-# Fit the model to the data
-fitFe_red <- workflowFe_red %>%
+#Fit the model
+fitFe <- workflow() %>%
+  add_recipe(recipeFe) %>%
+  add_model(gamma_spec) %>%
   fit(data = hapin_merged)
 
 # Extract and print the results of the model
-resultsFe_red <- fitFe_red %>%
+resultsFe <- fitFe %>%
   pull_workflow_fit() %>%
   tidy()
 
-print(resultsFe_red)
+print(resultsFe)
+
+###########To predict the K variable##############
+# Create the recipe for preprocessing
+recipeK <- recipe(K ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+#Fit the model
+fitK <- workflow() %>%
+  add_recipe(recipeK) %>%
+  add_model(gamma_spec) %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsK <- fitK %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsK)
+
+###########To predict the Mg variable##############
+# Create the recipe for preprocessing
+recipeMg <- recipe(Mg ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+#Fit the model
+fitMg <- workflow() %>%
+  add_recipe(recipeMg) %>%
+  add_model(gamma_spec) %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsMg <- fitMg %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsMg)
+
+###########To predict the Mn variable##############
+# Create the recipe for preprocessing
+recipeMn <- recipe(Mn ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+#Fit the model
+fitMn <- workflow() %>%
+  add_recipe(recipeMn) %>%
+  add_model(gamma_spec) %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsMn <- fitMn %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsMn)
+
+###########To predict the S variable##############
+# Create the recipe for preprocessing
+recipeSul <- recipe(S ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+#Fit the model
+fitSul <- workflow() %>%
+  add_recipe(recipeSul) %>%
+  add_model(gamma_spec) %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsSul <- fitSul %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsSul)
 
 ###########To predict the Si variable##############
 # Create the recipe for preprocessing
-recipeSi_red <- recipe(Si ~ fueltype, data = hapin_merged) %>%
+recipeSi <- recipe(Si ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
   step_dummy(all_nominal(), -all_outcomes())
 
-# Create a workflow
-workflowSi_red <- workflow() %>%
-  add_recipe(recipeSi_red) %>%
-  add_model(model_spec)
-
-# Fit the model to the data
-fitSi_red <- workflowSi_red %>%
+#Fit the model
+fitSi <- workflow() %>%
+  add_recipe(recipeSi) %>%
+  add_model(gamma_spec) %>%
   fit(data = hapin_merged)
 
 # Extract and print the results of the model
-resultsSi_red <- fitSi_red %>%
+resultsSi <- fitSi %>%
   pull_workflow_fit() %>%
   tidy()
 
-print(resultsSi_red)
+print(resultsSi)
 
 ###########To predict the Ti variable##############
 # Create the recipe for preprocessing
-recipeTi_red <- recipe(Ti ~ fueltype, data = hapin_merged) %>%
+recipeTi <- recipe(Ti ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
   step_dummy(all_nominal(), -all_outcomes())
 
-# Create a workflow
-workflowTi_red <- workflow() %>%
-  add_recipe(recipeTi_red) %>%
-  add_model(model_spec)
-
-# Fit the model to the data
-fitTi_red <- workflowTi_red %>%
+#Fit the model
+fitTi <- workflow() %>%
+  add_recipe(recipeTi) %>%
+  add_model(gamma_spec) %>%
   fit(data = hapin_merged)
 
 # Extract and print the results of the model
-resultsTi_red <- fitTi_red %>%
+resultsTi <- fitTi %>%
   pull_workflow_fit() %>%
   tidy()
 
-print(resultsTi_red)
+print(resultsTi)
+
+###########To predict the Zn variable##############
+# Create the recipe for preprocessing
+recipeZn <- recipe(Zn ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
+  step_dummy(all_nominal(), -all_outcomes())
+
+#Fit the model
+fitZn <- workflow() %>%
+  add_recipe(recipeZn) %>%
+  add_model(gamma_spec) %>%
+  fit(data = hapin_merged)
+
+# Extract and print the results of the model
+resultsZn <- fitZn %>%
+  pull_workflow_fit() %>%
+  tidy()
+
+print(resultsZn)
 ```
+
+The following table shows the values used to judge models (RMSE and R-square) for all chemical species between Model 1 and Model 2.
+
+```{r echo=FALSE}
+#Load the metrics table
+suptable <- read_rds(here("results", "tables", "model_metrics.rds"))
+
+#Show the table
+suptable %>% gt()
+```
+
