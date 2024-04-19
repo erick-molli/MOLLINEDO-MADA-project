@@ -1,6 +1,5 @@
 ---
-title: "Project Data Exploring"
-subtitle: "Project: Part 2"
+title: "Data Exploring"
 author: Erick E. Mollinedo
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
 format: html
@@ -49,7 +48,7 @@ stat.test <- stat.test %>%
 
 #Creating the boxplot of concentrations by fueltype
 options(scipen = 999) #to remove scientific notation for smaller values (i.e. changes from 1*10-3 to 0.001)
-ggplot(conc_longer)+
+fueltype <- ggplot(conc_longer)+
   geom_boxplot(aes(x= species, y= concentration, fill= fueltype))+
   scale_fill_brewer(palette = "Paired")+
   labs(x= "Chemical species", y= "Concentration (ug/m3)")+
@@ -58,9 +57,11 @@ ggplot(conc_longer)+
   theme_bw(base_size = 15)+
   stat_pvalue_manual(stat.test, label = "p.signif", tip.length = 0.001) #Add the significance bars, use 'p.signif' to add *** or 'ns'
 
+fueltype
+
 #Creating the boxplot of concentrations by arm
 options(scipen = 999) #to remove scientific notation for smaller values (i.e. changes from 1*10-3 to 0.001)
-ggplot(conc_longer)+
+arm <- ggplot(conc_longer)+
   geom_boxplot(aes(x= species, y= concentration, fill= arm))+
   scale_fill_brewer(palette = "Paired")+
   labs(x= "Chemical species", y= "Concentration (ug/m3)")+
@@ -68,6 +69,12 @@ ggplot(conc_longer)+
   guides(fill= guide_legend(title= "Study Arm"))+ #Change legend from fuel_type to Fuel type
   theme_bw(base_size = 15)+
   stat_pvalue_manual(stat.test, label = "p.signif", tip.length = 0.001) #Add the significance bars, use 'p.signif' to add *** or 'ns'
+
+arm
+
+#Save plots
+ggsave(here("results", "figures", "boxplot-fueltype.png"), plot = fueltype, width = 10, height = 6, dpi = 300)
+ggsave(here("results", "figures", "boxplot-arm.png"), plot = arm, width = 10, height = 6, dpi = 300)
 ```
 
 The boxplots for `fueltype` and `arm` show what I was expecting in terms of how the data is distributed. The concentrations seem higher in some elemental especies such as BC, Ca, K, Mg, Mn and S. The following steps will be to evaluate if those differences in concentrations are statistically different.
@@ -93,7 +100,7 @@ cor <- concentration %>% select(-c(filter_id, fueltype, arm))
 cor <- stats::cor(cor, method = "pearson", use = "complete.obs") #I had to input the `use=` argument since there are missing values in the BC variable. I will correct them later.
 
 #Create the correlation plot
-corrplot(cor, method = "color", type = "lower", #Color form and displays at the lower portion
+corplot <- corrplot(cor, method = "color", type = "lower", #Color form and displays at the lower portion
          col = COL2("RdYlBu", 20), order = "hclust", #Color palette, and order or the species
          tl.col = "orangered4", tl.srt = 0, tl.cex = 0.9,  #Color of the axis, position and size
          addCoef.col = "gray10", number.font = 2, number.cex = 0.8, #Display correlation number, set the font and size
@@ -155,51 +162,49 @@ hapin_longer <- hapin %>%
                names_to = "exposure", values_to = "response") #Create the longer df
 
 #Create a simple barplot
-ggplot(hapin_longer, aes(x= exposure, fill= response))+
+cat_expo <- ggplot(hapin_longer, aes(x= exposure, fill= response))+
   geom_bar(position = "dodge")+
   theme_classic()
+
+#Visualize plot
+cat_expo
+
+#Save plot
+ggsave(here("results", "figures", "cat-exposures.png"), plot = cat_expo, width = 10, height = 6, dpi = 300)
 ```
 
 The bar plot shows that the majority of participants recorded to not being exposed to most of the exposures, except to `stove`, which is the stove that the participants use. Others also recorded that were exposed to other stoves, or to trash burning.
-
-Given that some of the categories have very low responses, I decided to combine some categories to have a greater variability in the exposures and then explore if these are good when modelling.
-
-```{r}
-#Combine some exposures to new categories
-hapin <- hapin %>%
-  mutate(micro_exposures = if_else( #The micro_exposures variable will include 'smoke', 'coil', 'incense' and 'kerosene'
-    (smoke == "Yes" | coil == "Yes" | incense == "Yes" | kerosene == "Yes"),
-    "Yes", "No", missing = "No"
-  )) %>%
-  mutate(macro_exposures = if_else( #The macro_exposures variable will include 'trash' and 'crop'
-    (trash == "Yes" | crop == "Yes"),
-    "Yes", "No", missing = "No"
-  ))
-
-#Save this as a new .RDS file
-saveRDS(hapin, file = here("data", "processed-data", "hapin_samples.rds"))
-```
 
 And finally plotting the PM2.5, BC and CO concentrations in different graphs using `ggplot()`
 
 ```{r}
 #Histogram plot for the PM2.5 concentrations
-ggplot(hapin, aes(x= pm25, fill= fueltype))+
+pm25 <- ggplot(hapin, aes(x= pm25, fill= fueltype))+
   geom_histogram()+
   theme_classic()+
   labs(x= "PM2.5 Concentration (ug/m3)")
 
 #Histogram plot for the BC concentrations
-ggplot(hapin, aes(x= bc, fill= fueltype))+
+bc <- ggplot(hapin, aes(x= bc, fill= fueltype))+
   geom_histogram()+
   theme_classic()+
   labs(x= "Black Carbon Concentration (ug/m3)")
 
 #Histogram plot for the CO concentrations
-ggplot(hapin, aes(x= co, fill= fueltype))+
+co <- ggplot(hapin, aes(x= co, fill= fueltype))+
   geom_histogram()+
   theme_classic()+
   labs(x= "Carbon Monoxide Concentration (ppm)")
+
+#Visualize plots
+pm25
+bc
+co
+
+#Save plots
+ggsave(here("results", "figures", "pm25.png"), plot = pm25, width = 10, height = 6, dpi = 300)
+ggsave(here("results", "figures", "bc.png"), plot = bc, width = 10, height = 6, dpi = 300)
+ggsave(here("results", "figures", "co.png"), plot = co, width = 10, height = 6, dpi = 300)
 ```
 
 The histograms for the concentration of the three pollutants show that they don't follow a normal distribution. Most of the concentrations are low, and it is also seen that overall the concentrations in the LPG fueltype are lower than the Biomass group. If these variables will be used for modeling purposes, they should be log-transformed or using a logistic regression approach.

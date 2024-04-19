@@ -7,5 +7,3 @@ Under the `manuscript` subfolder, there is a Quarto document where I will be wor
 
 Under the `supplement` folder inside `manuscript`, it is located the Quarto document that produces the Supplementary analysis document. The Supplementary Material document is located as a Word file named `Supplementary`.
 
-There is also a `slides` folder that will contain the code needed to create slides for a presentation.
-

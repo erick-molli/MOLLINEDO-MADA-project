@@ -1,6 +1,5 @@
 ---
 title: "Data cleaning"
-subtitle: "Project: Part 2"
 author: Erick E. Mollinedo
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
 format: html

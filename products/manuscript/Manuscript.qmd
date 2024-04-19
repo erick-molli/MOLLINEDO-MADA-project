@@ -1,6 +1,5 @@
 ---
 title: "Elemental characterization of personal filter samples from the Household Air Pollution Intervention Network (HAPIN) trial for Source Apportionment"
-subtitle: "Project: Part 4"
 author: Erick E. Mollinedo
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
 format:
@@ -18,7 +17,14 @@ library(here)
 library(knitr)
 library(readr)
 library(tidyverse)
+library(gt)
 ```
+
+## Abstract
+
+Household air pollution is one the most prominent risks in low- and middle-income countries. Fine particulate matter (PM~2.5~) is a major air pollutant from household air pollution. The chemical and physical composition of PM~2.5~ depends heavily on its sources. Source apportionment is a methodology that aims to identify sources of pollution to reconstruct their impacts, using methods such as positive matrix factorization (PMF). The current project aims to conduct the initial analysis before conducting PMF modeling, to describe the most important chemical species in personal exposure filter samples from rural Guatemala. Six-hundred and twenty-nine PTFE filter samples from the HAPIN trial, a randomized fuel intervention controlled trial in Guatemala, were analyzed using X-Ray fluorescence to determine the presence of inorganic elements. Transmissometry was used to determine the black carbon (BC) concentrations and gravimetry to determine the PM~2.5~ concentrations. Multivariate linear regression models and gamma GLM models were used to predict which elements can be used to determine total PM~2.5~ mass concentrations and which questionnaire based exposures can infer BC mass concentrations. It was determined that the concentrations were significantly lower in samples from users that cooked using liquefied petroleum gas (LPG) fuel, compared to users that cooked with biomass fuels. The linear regression model was the most appropriate to determine the apportionment of each chemical species to total PM~2.5~ concentrations, and BC, magnesium and potassium seemed the most important predictors. The gamma GLM model was the most fit to predict the impact of categorical exposures on BC concentrations, where type of fuel, exposure to kerosene and a neighboring biomass stove were the most significantly associated exposures. However, caution should be taken into using questionnaire exposures to infer predictions. In addition, the ground for future source apportionment analyses was founded through these statistical analyses. The inclusion of additional chemical species could better inform the total composition of PM~2.5~ so PMF can be used for source apportionment.
+
+{{< pagebreak >}}
 
 ## Introduction
 
@@ -28,13 +34,13 @@ The identification of point sources of pollution is important for the developmen
 
 The Household Air Pollution Intervention Network (HAPIN) trial was a randomized controlled trial conducted in four different LMICs, where a liquefied petroleum gas (LPG) stove was delivered as an intervention to half of the pregnant women participants, meanwhile the other half remained cooking using their biomass stove. The intervention was evaluated in terms of reduction of exposures and specific health outcomes by comparing the two study groups (Control and Intervention). Baseline measurements were taken to the participants, and then followed-up for about 18 months, conducting exposure measurements three times during pregnancy and three times after the birth of the child. A description of the HAPIN trial and the methods for exposure sampling can be found elsewhere [@clasen_design_2020; @johnson_air_2020]. A source apportionment pilot study from HAPIN was conducted in 2022. This study was conducted in 64 and 59 personal exposure filter samples from the pilot phase in Guatemala and Rwanda, respectively. Twenty-two chemical species were analyzed in all samples using X-ray fluorescence (XRF), a non-destructive spectrometry analytical method, but only 12 species were detected at both study sites in comparable levels. Based on the chemical species detected, four potential sources of PM~2.5~ were identified in both sites. One study caveat is the small sample size and limited assessment of chemical composition and sources between study arms, so further studies to complement the findings are needed [@kearns_exposures_nodate].
 
-The following study aims to produce the clean dataset from the HAPIN trial in Guatemala, needed for PMF analysis and to conduct the exploratory and main data analysis to answer some questions before the PMF modelling: 1.) What chemical species are correlated among each other from these filter samples?, 2.) What are the differences in concentrations of the chemical species if the samples are categorized by type of fuel and by study arm? and 3.) What exposures are associated with the variations in concentrations of the most significant chemical species?
+The following study aims to produce the clean dataset from the HAPIN trial in Guatemala, needed for PMF analysis. This study also aims to conduct main and exploratory analysis of this chemical species dataset to answer some questions before the PMF modelling: 1.) What chemical species are correlated among each other from these filter samples?, 2.) What are the differences in concentrations of the chemical species if the samples are categorized by type of fuel and by study arm? 3.) What chemical species are associated with the variations in concentrations of total PM~2.5~? and 4.) What exposures can be modeled as predictors of BC concentration?
 
 ## Methods
 
 ### Data collection
 
-The main exposure data comes from filter samples of PM~2.5~ personal exposure measurements in pregnant women participants from the HAPIN trial, in Guatemala. The Enhanced Children's MicroPEM (ECM) was the instrument used for the measurement of PM~2.5~ exposures. In summary, the instrument works as an air pump with a standard flow of 0.3 liters per minute, so the particles get into an inlet and get collected into the filter. In total, six hundred and forty eight sample filters are available, where eighteen correspond to field blanks. From the HAPIN trial study design, in total, six exposure measurements (visits) were conducted during pregnancy in around 800 participants, but for this scenario, only 648 filter samples were randomly selected for chemical species characterization. Other exposures where collected as categorical variables using standardized questionnaires administered in each visit. These exposures capture some of the sources of exposure such as tobacco smoke, trash burning, use on incense or coil, kerosene and others.
+The main exposure data comes from filter samples of PM~2.5~ personal exposure measurements in pregnant women participants from the HAPIN trial, in Guatemala. The Enhanced Children's MicroPEM (ECM) was the instrument used for the measurement of PM~2.5~ exposures. In summary, the instrument works as an air pump with a standard flow of 0.3 liters per minute, so the particles get into an inlet and get collected into the filter. In total, six hundred and forty eight sample filters were available, where eighteen correspond to field blanks. From the HAPIN trial study design, in total, six exposure measurements (visits) were conducted during pregnancy in around 800 participants, but for this scenario, only 648 filter samples were randomly selected for chemical species characterization. Other exposures where collected as categorical variables using standardized questionnaires administered in each visit. These exposures capture some of the sources of exposure such as tobacco smoke, trash burning, use of incense or coil, kerosene, exposure to other biomass stoves and others.
 
 ### Concentration estimates
 
@@ -46,57 +52,111 @@ Black carbon was estimated measuring transmissometry via a Magee Sootscan instru
 
 $$BC = \frac{ln(I_{f}/I_{0}) * A/V * 10^6} \sigma $$ Where, I~f~ is the post-attenuation and I~0~ is the pre-attenuation, A is the area of the filter, V is the volume of air the sampler used to collect the particles and $\sigma$ is the mass absorption coefficient (a constant).
 
-The concentration of 22 chemical species (elements) on the filters were determined using X-Ray Fluorescence (XRF), and the uncertainties were estimated also based on the XRF instrument.
+The concentration of 22 chemical species (elements) on the filters were determined using a non-destructive spectrometer technique: X-Ray Fluorescence (XRF), and the uncertainties were estimated also based on the XRF instrument.
 
 ### Concentration and Uncertainties data processing
 
-First, all chemical species where more than 50% of the samples are below the detection limit (LOD) were filtered out, leaving a total of 10 chemical species. For these remaining species, the concentrations were adjusted based on the blank filters, and the values below LOD were replaced as their corresponding LOD divided by the square root of 2. Finally, the concentrations were transformed to micrograms per cubic meter (ug/m^3^). Also, the uncertainties were transformed to ug/m^3^ to match the units of the concentrations. In addition, the black carbon concentrations were added to add another chemical species to the analysis.
+All data cleaning and processing were performed on R (version 4.3.2). First, all chemical species where more than 50% of the samples are below the detection limit (LOD) were filtered out, leaving a total of 10 chemical species. For these remaining species, the concentrations were adjusted based on the blank filters, and the values below LOD were replaced as their corresponding LOD divided by the square root of 2. Finally, the concentrations were transformed to micrograms per cubic meter (ug/m^3^). Also, the uncertainties were transformed to ug/m^3^ to match the units of the concentrations. In addition, the black carbon concentrations were added to add another chemical species to the analysis.
 
 The uncertainties were processed by, first removing all the chemical species that had more than 50% of their samples below the detection limit, as seen above. Then, the uncertainties were adjusted based on equations derived from the law of propagation of uncertainty. In brief, the equations consider the individual uncertainties from each one of the variables, in this case the XRF instrument uncertainty, the area of the filter, volume, and the attenuation (in case of the Black carbon measurements).
 
-### Statistical analysis
+### Statistical analyses
 
-The correlation (r^2^) between chemical species were determined using paired correlations in a correlation plot matrix. To assess differences in concentrations between samples by type of fuel, a Welch two-sample T-test was computed. Additional plots were presented to visualize those differences between samples.
+All statistical analyses were performed on R (version 4.3.2). An initial exploration of the data was performed, to determining missing values for all possible predictors and outcomes and trends for all chemical species. These explorations served in order to skim down which variables to use as predictors and outcomes and to compute their summary statistics.
 
-Multivariate regression models were computed for each one of the key chemical species to assess which exposures are likely to explain the variations in their concentrations. Given that there is low variability in the answers for some of the categorical exposures, in addition to computing a multivariate model with all the predictors, another model was evaluated. This second model considers other stoves and fueltype as predictors, alongside a new combined variable called 'micro exposures' that englobes exposures to kerosene, cigarette, coils and incense and the variable 'macro exposures' which englobes exposures to trash burning and crop residues. Given that the concentrations can be approximated to a gamma distribution, the generalized linear model with gamma distribution was used to compute the models. The root mean square error (RMSE) and R-squared were the metric parameters to evaluate which one of both models for all chemical species fits best.
+The correlation (r^2^) between chemical species were determined using paired correlations in a correlation plot matrix. To assess differences in concentrations between samples by type of fuel and by study arm, a Welch two-sample T-test was computed. Multivariate regression models were computed to assess which elements are likely to explain the variations in concentrations of total PM~2.5~ and to determine which exposures are most associated with the BC concentrations. For each one of the pollutants as outcomes (PM~2.5~ and BC), two different models were computed and assessed. Model 1 was defined as a linear multivariate regression model, meanwhile Model 2 was a Generalized linear model with gamma distribution, due to the approximation of the distributions observed for the concentrations of each chemical species. The PM~2.5~ model used all the chemical species to be included for PMF as predictors. For the BC model, the predictors were all the categorical exposures with two levels (Yes or No) registered from the questionnaires. The final model for each pollutant was reported and selected based on certain parameters such as the metrics, uncertainties and residuals.
 
 ## Results
 
-Six hundred and twenty-nine filter samples were considered in the final analyses. @fig-stats1 presents a summary of the concentrations from the biomass fueltype samples. Meanwhile @fig-stats2 shows the summary of concentrations from the LPG observations. As a note, all the observations of the baseline measurements were categorized as biomass fuel type, since at this point, the LPG intervention was not yet allocated.
+Six hundred and twenty-nine filter samples were considered in the final analyses, due to one filter sample that was damaged and the concentration was not available. Among the 22 chemical species, only 11 were included to be used for future PMF modeling, which means only 11 species had more than 50% of their observations above the limit of detection. Black carbon was also included into the chemical species, due to be a representative of a good portion of total PM~2.5~. Table 1 and Table 2 show a summary of the descriptive statistics for each chemical species by type of fuel. All the statistics are listed in ug/m^3^ units. As a note, all the observations of the baseline measurements were categorized as biomass fuel type, since at this point, the LPG intervention was not yet allocated. This explains the larger number of samples belonging to the biomass fuel type.
 
-![Summary statistics of the concentrations in the biomass group](../../results/tables/table1.jpeg){#fig-stats1}
+```{r echo=FALSE}
+#Load the summary statistics table
+biomass_table <- read_rds(here("results", "tables", "biomass-summary.rds"))
 
-![Summary statistics of the concentrations in the LPG group](../../results/tables/table2.jpeg){#fig-stats2}
+#Show the table (Biomass fueltype)
+biomass_table %>% gt() %>% tab_header(title = md("**Summary statistics: Biomass fuel samples**")) %>%
+  tab_style(style = list(cell_text(weight = "bold")),
+    locations = list(cells_title(groups = "title"),
+      cells_column_labels(columns = everything())))
+```
+
+```{r echo=FALSE}
+#Load the summary statistics table
+lpg_table <- read_rds(here("results", "tables", "lpg-summary.rds"))
+
+#Show the table (LPG fueltype)
+lpg_table %>% gt() %>% tab_header(title = md("**Summary statistics: LPG fuel samples**")) %>%
+  tab_style(style = list(cell_text(weight = "bold")),
+    locations = list(cells_title(groups = "title"),
+      cells_column_labels(columns = everything())))
+```
 
 ### Chemical Species correlations
 
-In terms of correlations, Spearman correlation was estimated between all the chemical species and @fig-correlations shows the associations highlighting the R^2^ value. It is observed that the highest correlation is observed between Si and Fe, Ti-Fe, and Al-Si. These values could indicate that these species come from the same sources, so it will probably be easier to identify using the PMF software after the conclusion of this project.
+In terms of correlations, Spearman correlation was estimated between all the chemical species and @fig-correlations shows the associations highlighting the R^2^ value. It is observed that the highest correlation is observed between Si and Fe, Ti-Fe, and Al-Si. These values could indicate that these species come from the same point sources, something to account when conducting the source apportionment analysis using PMF modeling.
 
 ![Correlation plot for chemical species](../../results/figures/corplot.jpg){#fig-correlations}
 
 ### Chemical species concentrations
 
-The concentration of the chemical species are distributed in different ranges depending on their type. For example, the highest concentrations were determined to be for Black carbon (BC), with values from 1 to 100 ug/m^3^. The remaining chemical species have lower concentrations, ranging from less than 0.1 ug/m^3^ to 10 ug/m^3^. Other noticeable patterns is that some of the species were found in higher concentrations for personal samples from participants that used biomass stoves, compared to LPG stoves (@fig-concentrations). When conducting the two-sided T-test, it was determined that all of the chemical species, except Fe, Al and Zn were significantly different between type of fuel. The differences in concentrations were also analyzed by study arm, however, given that all baseline measurements belonged to biomass fueltype observations, these results were not presented but can be observed in the Supplementary material.
+The concentration of the chemical species are distributed in different ranges depending on their type. For example, the highest concentrations were determined to be for Black carbon (BC), with values from 1 to 96 ug/m^3^. The remaining chemical species have lower concentrations, ranging from less than 0.1 ug/m^3^ to 10 ug/m^3^. Other noticeable patterns is that some of the species were found in higher concentrations for personal samples from participants that used biomass stoves, compared to LPG stoves (@fig-concentrations). When conducting the two-sided T-test, it was determined that all of the chemical species, except Fe, Al and Zn were significantly different between type of fuel. The differences in concentrations were also analyzed by study arm, however, given that all baseline measurements belonged to biomass fueltype observations, these results were not presented but can be observed in the Supplementary material (Figure 1).
 
-![Chemical species concentrations by type of fuel](../../results/figures/boxplot-fueltype.jpg){#fig-concentrations}
+![Chemical species concentrations by type of fuel](../../results/figures/boxplot-fueltype.png){#fig-concentrations}
 
-### Chemical species models
+### Chemical species modeling
 
-Model 1, for each one of the chemical species, was computed to determine which of the exposures could better explain the variations in the concentrations (Supplementary Material). Given that none of the observations recorded to have used a generator machine for corn mill grinding, this categorical variable was left out. When computing this model, none of the predictors were significant to predict the concentrations of Aluminim (Al), Iron (Fe) and Zinc (Zn). Kerosene was found a significant predictor of Black carbon (BC) and Magnesium (Mg) concentrations (p < 0.05). Exposure to smoke emitted from a biomass stove other than the one in their homes was also found as a significant predictor (p < 0.05) for BC and potassium (K). Also, exposure to cigarette smoke in the homes was associated to K concentration. Meanwhile, the strongest predictor was found to be type of fuel (p < 0.01), where exposure to biomass fuel was associated to an increase of the concentration of BC, Ca, K, Mg, Mn, S, Si and Ti. These last results are consistent to what was observed in terms of significant differences among samples by type of fuel (@fig-concentrations).
+#### Modeling PM~2.5~
 
-Model 2 was tested as another way to evaluate which predictors could explain the variations in concentrations by grouping certain exposures. Similar results were observed as from Model 1. Micro exposures, which is a category that includes smoking, incense use, kerosene and mosquito coils explained the variations in BC concentrations (p < 0.05). Exposure to other biomass stoves was a predictor for BC and K (p < 0.05). Fueltype was still the strongest predictor (p < 0.01) for the variations in concentrations for BC, Ca, K, Mg, Mn, S, Si and Ti.
+The PM~2.5~ model included aluminum, calcium, iron, potassium, magnesium, manganese, sulfur, silicon, titanium, zinc and black carbon as predictors in the final model. Between both computed models, the linear regression model was selected as the most appropriate. Table 3 summarizes three metrics used for the comparisons between both models: RMSE, R-squared and MAE. As seen from these metrics, there was a drastic change when comparing both types of models, showing an improvement in the linear model. This was confirmed due to the under-prediction of certain values as seen in the observed-predicted plots and residuals (Supplementary material, Figures 5 and 6) for the GLM gamma model.
 
-In terms of comparison between models, both models seem to under-perform in terms of predictions (Table 1, Supplementary Material). The lowest RMSE was observed in Model 2 for all the chemical species, meanwhile the highest R-square was observed in Model 1. In this case, Model 2 with grouping of variables could be a better model to explain the effect of certain exposures to the concentrations of the selected chemical species.
+Based on the coefficients and the statistical significance (p-value), it was determined that only magnesium, potassium and black carbon had a significant effect on total mass concentration of PM~2.5~. Black carbon and potassium had an increasing effect, meanwhile magnesium had a decreasing effect for predicting total PM~2.5~ mass concentration.
 
+```{r echo=FALSE}
+#Load the PM2.5 summary metrics table
+pmmetrics <- read_rds(here("results", "tables", "pmmodel_metrics.rds"))
+
+#Show the table (LPG fueltype)
+pmmetrics %>% gt() %>% tab_header(title = "Table 3", subtitle = md("**Metrics summary: PM2.5 Models**")) %>%
+  tab_style(style = list(cell_text(weight = "bold")),
+    locations = list(cells_title(groups = "title"),
+      cells_column_labels(columns = everything())))
+```
+
+#### Modeling Black Carbon
+
+For the model to predict black carbon concentrations, the predictors considered in the final model were: smoking, use of mosquito coils, trash burning, use of kerosene, cooking smoked foods, crop burning, exposed to a biomass stove (or a neighboring biomass stove) and type of fuel. Use of stove, incense and a generator for corn grinding were not included due to the small variability of answers (most or all of them coded as Yes or No). When comparing the linear and GLM regression models for BC, both seem to perform similarly based on the metrics (Table 4) and the residuals and observed vs predicted values plots (Supplementary: Figures 7 and 8).
+
+The gamma GLM model was selected as the most appropriate, given its ability to more accurately discriminate total mass BC concentrations from the mentioned categorical variables. Based on the coefficients and the p-values it was determined that type of fuel, exposure to a neighboring biomass stove and use of kerosene could be predictors of BC concentrations. The use of LPG as a source of fuel has a significant reduction of BC concentrations, meanwhile the use of kerosene and exposure to a neighboring biomass stove increases BC total mass concentration.
+
+```{r echo=FALSE}
+#Load the PM2.5 summary metrics table
+bcmetrics <- read_rds(here("results", "tables", "bcmodel_metrics.rds"))
+
+#Show the table (LPG fueltype)
+bcmetrics %>% gt() %>% tab_header(title = "Table 4", subtitle = md("**Metrics summary: BC Models**")) %>%
+  tab_style(style = list(cell_text(weight = "bold")),
+    locations = list(cells_title(groups = "title"),
+      cells_column_labels(columns = everything())))
+```
 
 ## Discussion
 
+Although the scope of this study was not to conduct the source apportionment methodology, the findings reported here are helpful for the early stages of the overall positive matrix factorization (PMF) modeling of the HAPIN Guatemala personal exposure samples. Based on the limit of detection, only 10 of the 22 chemical species (elements) were deemed important to be included in the PMF model. The model is sensitive to the mass concentrations of all species used, that is why the remaining 11 species were left out of the analyses. Some important species such as lead, copper, chromium, iodine, arsenic and others could provide a better profile of the chemical composition of total PM~2.5~. However, since these were in trace concentrations, maybe they are not as important as others, in terms of determining the sources of PM~2.5~ in this location. For the chemicals that were incorporated in the final analyis, it was observed that BC had overall the highest concentrations. This could indicate that BC is a chemical component that comes from many different sources besides just biomass burning, which is one of the most expected exposures/sources that contribute to these samples. The following element in highest concentration appeared to be potassium, which again, based on literature [@rai_real-time_2020; @pervez_impact_2012], it is an indicator of biomass burning.
+
+When comparing the mass concentrations between samples from users that cooked using biomass fuels against cooking with LPG, it was observed that this provided a more accurate picture of the differences by the LPG intervention only. As seen in the analyses, dividing the samples in control and intervention arms produced similar results that when dividing by type of fuel. However there were higher concentration values observed for some species in the intervention samples, which is explained by the inclusion of all baseline measurements into this division. As explained in the HAPIN study description [@clasen_design_2020; @johnson_air_2020], the intervention was allocated after baseline, and during baseline it was observed that the concentrations of the main pollutants was virtually the same between both arms. In conclusion, it is considered that if looking at differences, categorizing by type of fuel, provides a clearer picture of the exposure contrasts. The correlations explored between the selected chemical species provide a glimpse of what elements could be more associated in terms of a common source. The more notables are iron, silicon and aluminum, that, based on the literature, are mostly associated by a crustal source of pollution [@zhou_chemical_2014]. Crustal means ground or dust generated particles. Other patterns are not so easily visualized, but there is a possible association between magnesium and calcium, which could be an indicator of burning of some sort of plant-based material [@zhou_chemical_2014; @rai_real-time_2020; @pervez_impact_2012]. Black carbon was moderately associated with potassium, which is a possible indicator of a biomass burning source, but this moderate to low correlation indicates that it could come from many other sources.
+
+In terms of model selection for predicting PM~2.5~ and BC concentrations, multivariate models were deemed the most appropriate due to the presence of many predictors. In the BC prediction model, the gamma GLM model seemed more appropriate compared to the linear regression model, however this may not be the most accurate and other types of model could be a better fit. It would be interesting to fit a LASSO regression model, in order to better discriminate which of the categorical exposures could be used to explain the variations in concentrations of BC. Another explanation why this model under-performed could be to the data collection process, there were just a few records of certain exposures such as trash burning, smoking, incense, such that this could have driven the model to the wrong conclusions. This is why it is believed that modelling exposures is more accurate when considering actual exposure measurements (pollutants or chemicals), instead of relying on questionnaire based exposures that could provide biased answers. On another hand, by considering only kerosene use, exposure to a neighboring biomass stove and type of fuel as accurate predictors of BC, we could infer that the model under-performed. However, it is also important to note that these are good representations of use of biomass fuel source, which again, could be the most significant source of pollution, instead of considering other such as vehicle emissions, crustal or others.
+
+For the PM~2.5~ models, the multivariate linear regression model seems the most appropriate as seen on the evaluation criteria (Table 3 and Supplementary material). However, it is important to point out that the moderate R-squared value implies that not all of the chemical species were included in the model to explain the total mass concentrations of PM~2.5~. Besides BC, no other organic compounds were analyzed and included in the model, and it is known that some compounds like ammonia, elemental carbon, levoglucosan and many others [@gadi_source_2019] have very important roles in particulate matter composition. It was surprising that the GLM model did not perform as good as expected, usually under-predicting extreme values. One possible way to overcome this could have been to test a multivariate linear model log-transforming the outcomes and predictors, this is due to them not following a normal distribution. In terms of the most significant species, the significant contribution of potassium and black carbon only add to the evidence that biomass burning could be the most important contributor of particulate matter in this location.
+
+One of the limitations for this analyses is that, as pointed before, some chemical species were not included in the model. This is partly because of the source of the chemical species data, in this case it was performed only transmissometry, gravimetry and x-ray fluorescence to determine some of the species. It would be impossible to determine all the chemical species that conform the PM~2.5~ filter samples, however, adding a chromatography analysis could improve the resolution of the model by detecting additional compounds. Another goal accomplished by the analyses was to compute the final concentrations and uncertainties for all the chemical species and filter samples that will be analyzed using PMF. Currently, the PMF algorithm is licensed by the Environmental Protection Agency, under the EPA PMF 5.0 software [@norris_positive_nodate]. There was an attempt to compute the whole PMF analysis for source apportionment in R, however, this algorithm is not available publicly due to the patent. However, there is one specific packages 'pmfr' found online in a Github repository (https://github.com/skgrange/pmfr) that allows working with the outputs of the EPA PMF 5.0 software to do additional analysis and plotting.
 
 
 ## Conclusions
 
+Twelve chemical species from the filter samples in rural Guatemala were found important for PMF modeling: Mg, Mn, Al, Si, S, Ca, K, Zn, Ti, Fe and BC. Of these species, all of them except Al, Zn and Fe had significantly smaller mass concentrations in LPG fuel samples compared to biomass fuel samples. BC and K are two of the most available chemical species found in the samples, which can be associated to the heavy influence of biomass burning in this location. When modelling which exposures were associated to BC concentrations, kerosene use, exposure to a neighboring biomass stove and type of fuel were significant predictors according to a GLM gamma model. However, the low diversity in answers for these categorical variables could have biased the results. On the other hand, a linear regression model was found more accurate to define total PM~2.5~ mass concentrations with all the chemical species. BC, potassium and magnesium were the most significant predictors in the PM~2.5~ model. The current study also sets the final concentration and uncertainty values needed to perform source apportionment using the PMF algorithm developed by the Environmental Protection Agency.
 
 {{< pagebreak >}}
 
 ## References
-

@@ -1,6 +1,5 @@
 ---
-title: "Project Part 3"
-subtitle: "Data analysis code"
+title: "Data analysis code"
 author: Erick E. Mollinedo
 date: '`r format(Sys.Date(), "%B %d, %Y")`'
 format: html
@@ -16,6 +15,7 @@ library(here)
 library(readxl)
 library(tidyverse)
 library(corrplot)
+library(grid)
 library(RColorBrewer)
 library(ggpubr)
 library(rstatix)
@@ -29,7 +29,53 @@ concentration <- read_rds(here("data", "processed-data", "concentration.rds"))
 hapin_filters <- read_rds(here("data", "processed-data", "hapin_samples.rds"))
 ```
 
-To answer question 1, I will plot the correlations in a correlation plot using the `corrplot()` function. I used the previous code, since it was already developed, but editing to add more detail to the plot.
+### Summarize Concentrations
+
+The following chunk of code is to create the descriptive statistics tables for all chemical species concentrations. The tables will be saves as RDS files, so later they can be loaded as tables using `gt()`.
+
+```{r}
+#Create data frames for both LPG and Biomass groups
+biomass <- concentration %>% filter(fueltype == "Biomass") %>% select(-c(arm, filter_id))
+lpg <- concentration %>% filter(fueltype == "LPG") %>% select(-c(arm, filter_id))
+
+#Format dfs longer
+biomass_long <- biomass %>% #Biomass dataframe
+  pivot_longer(cols = -fueltype,
+               names_to = "Species", values_to = "Concentration")
+
+lpg_long <- lpg %>% #LPG dataframe
+  pivot_longer(cols = -fueltype,
+               names_to = "Species", values_to = "Concentration")
+
+#Create summary tables for each group
+biomass_summary <- biomass_long %>% #Biomass fuel
+  group_by(Species) %>% 
+  summarise(N = n(),
+            Mean = round(mean(Concentration), 2),
+            SD = round(sd(Concentration), 2),
+            Median = round(median(Concentration), 2),
+            IQR = round(IQR(Concentration), 2),
+            Min = round(min(Concentration), 2),
+            Max = round(max(Concentration), 2))
+
+lpg_summary <- lpg_long %>% #LPG fuel
+  group_by(Species) %>% 
+  summarise(N = n(),
+            Mean = round(mean(Concentration), 2),
+            SD = round(sd(Concentration), 2),
+            Median = round(median(Concentration), 2),
+            IQR = round(IQR(Concentration), 2),
+            Min = round(min(Concentration), 2),
+            Max = round(max(Concentration), 2))
+
+#Save dataframes in RDS format so they can later be uploaded as tables
+write_rds(biomass_summary, here("results", "tables", "biomass-summary.rds"))
+write_rds(lpg_summary, here("results", "tables", "lpg-summary.rds"))
+```
+
+### Correlations
+
+To answer the first question (correlations by species), I will plot the correlations in a correlation plot using the `corrplot()` function. I used the previous code, since it was already developed, but editing to add more detail to the plot.
 
 ```{r}
 #First, delete unnecessary variables to conduct the correlation test
@@ -46,7 +92,9 @@ corrplot(cor, method = "color", type = "lower", #Color form and displays at the 
          col.lim = c(0, 1), is.corr = T) #Set the color limits at the bar
 ```
 
-To answer question 2, I will conduct a T-test using the `tidymodels` package
+### Fuel type contrasts
+
+To answer question 2 (species differences among type of fuel), I will conduct a T-test using the `tidymodels` package
 
 ```{r}
 # Conduct T-tests for the chemical species based on 'fueltype'
@@ -63,14 +111,17 @@ results <- map_dfr(2:12, function(i) { #To select columns that contain the varia
     alternative = t_test$alternative,
     method = t_test$method,
     conf_low = t_test$conf.int[1],
-    conf_high = t_test$conf.int[2]
-  )
+    conf_high = t_test$conf.int[2])
 })
 
 results #Print the results as a tibble
 ```
 
-To answer question 3, I will conduct a regression analysis. But first I will merge the data from `hapin_filters` with the `concentration` data. Modeling can be difficult if there are missing values, so I will additionally clean the `hapin_merged` df, so it removes all NAs.
+To see a graphical representation of this test, check the boxplots generated in the `data_exploring_code.qmd` file.
+
+### PM2.5 and BC Modeling
+
+To answer questions 3 and 4 (modeling between PM2.5, BC and other chemical species), I will conduct a regression analysis. But first I will merge the data from `hapin_filters` with the `concentration` data. Modeling can be difficult if there are missing values, so I will additionally clean the `hapin_merged` df, so it removes all NAs.
 
 ```{r}
 #remove the 'arm' and 'fueltype' variables from the 'concentration' df
@@ -79,801 +130,306 @@ conc2 <- concentration %>% select(-c(arm, fueltype))
 #Use 'inner_join()' to merge dataframes
 hapin_merged <- inner_join(conc2, hapin_filters, by= "filter_id")
 
-#Remove pm25, bc and co, and additionally drop all NAs
+#Remove bc and co, and additionally drop all NAs
 hapin_merged <- hapin_merged %>%
-  select(-c(pm25, bc, co)) %>%
+  select(-c(bc, co)) %>%
   drop_na()
 
 #Save new df as a .RDS file
 saveRDS(hapin_merged, file = here("data", "processed-data", "hapin-final.rds"))
 ```
 
-Now conducting the model selection using the `tidymodels` package. For the models, I used the gamma distribution family, since the concentrations of each chemical species could be explained by the gamma distribution. I used all the recorded exposures except incence and generator, since these had low variability in the answers.
+Now conducting the model selection using the `tidymodels` package. For the models, I tried two multivariate models, first, using the gamma distribution family, since the concentrations of each chemical species could be explained by the gamma distribution. And the second model, using a simple linear regression. Also, the data was split into training (80%) and test data (20%).
 
 ```{r}
-# Create a generalized linear regression model specification using gamma distribution (This will be used for all the models)
-gamma_spec <- linear_reg(mode = "regression") %>%
+# Split the data into training and testing sets
+rngseed = 1234
+set.seed(rngseed) # for reproducibility
+data_split <- initial_split(hapin_merged, prop = 0.8)
+train_data <- training(data_split)
+test_data <- testing(data_split)
+```
+
+Now, creating the formulas for each question. Also, computing the model specifications, the workflow and fitting the models
+
+```{r}
+#Create formulas
+pm25formula <- pm25 ~ Mg + Al + Si + S + K + Ca + Ti + Mn + Fe + Zn + BC
+bcformula <- BC ~ smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype
+
+#Set model specifications
+lin_mod <- linear_reg() %>% set_engine("lm") #Linear
+glm_mod <- linear_reg(mode = "regression") %>% #GLM gamma
   set_engine("glm", family = Gamma(link = "log"))
 
-###########To predict the Al variable##############
-# Create the recipe for preprocessing
-recipeAl <- recipe(Al ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
-  step_dummy(all_nominal(), -all_outcomes())
+## ----Model 1: PM2.5 Linear---- ##
+linpm_wflow <- workflow() %>% #Workflow
+	add_model(lin_mod) %>% 
+	add_formula(pm25formula)
 
-#Fit the model
-fitAl <- workflow() %>%
-  add_recipe(recipeAl) %>%
-  add_model(gamma_spec) %>%
-  fit(data = hapin_merged)
+linpm_fit <- linpm_wflow %>% fit(data = train_data) #Fit the model
 
-# Extract and print the results of the model
-resultsAl <- fitAl %>%
-  pull_workflow_fit() %>%
-  tidy()
+## ----Model 2: PM2.5 GLM Gamma---- ##
+glmpm_wflow <- workflow() %>% #Workflow
+  add_model(glm_mod) %>% 
+  add_formula(pm25formula)
 
-print(resultsAl)
+glmpm_fit <- glmpm_wflow %>% fit(data = train_data) #Fit the model
 
-###########To predict the BC variable##############
-# Create the recipe for preprocessing
-recipeBC <- recipe(BC ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
-  step_dummy(all_nominal(), -all_outcomes())
+## ----Model 3: BC Linear---- ##
+linbc_wflow <- workflow() %>% #Workflow
+	add_model(lin_mod) %>% 
+	add_formula(bcformula)
 
-#Fit the model
-fitBC <- workflow() %>%
-  add_recipe(recipeBC) %>%
-  add_model(gamma_spec) %>%
-  fit(data = hapin_merged)
+linbc_fit <- linbc_wflow %>% fit(data = train_data) #Fit the model
 
-# Extract and print the results of the model
-resultsBC <- fitBC %>%
-  pull_workflow_fit() %>%
-  tidy()
+## ----Model 4: BC GLM Gamma---- ##
+glmbc_wflow <- workflow() %>% #Workflow
+  add_model(glm_mod) %>% 
+  add_formula(bcformula)
 
-print(resultsBC)
-
-###########To predict the Ca variable##############
-# Create the recipe for preprocessing
-recipeCa <- recipe(Ca ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
-  step_dummy(all_nominal(), -all_outcomes())
-
-#Fit the model
-fitCa <- workflow() %>%
-  add_recipe(recipeCa) %>%
-  add_model(gamma_spec) %>%
-  fit(data = hapin_merged)
-
-# Extract and print the results of the model
-resultsCa <- fitCa %>%
-  pull_workflow_fit() %>%
-  tidy()
-
-print(resultsCa)
-
-###########To predict the Fe variable##############
-# Create the recipe for preprocessing
-recipeFe <- recipe(Fe ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
-  step_dummy(all_nominal(), -all_outcomes())
-
-#Fit the model
-fitFe <- workflow() %>%
-  add_recipe(recipeFe) %>%
-  add_model(gamma_spec) %>%
-  fit(data = hapin_merged)
-
-# Extract and print the results of the model
-resultsFe <- fitFe %>%
-  pull_workflow_fit() %>%
-  tidy()
-
-print(resultsFe)
-
-###########To predict the K variable##############
-# Create the recipe for preprocessing
-recipeK <- recipe(K ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
-  step_dummy(all_nominal(), -all_outcomes())
-
-#Fit the model
-fitK <- workflow() %>%
-  add_recipe(recipeK) %>%
-  add_model(gamma_spec) %>%
-  fit(data = hapin_merged)
-
-# Extract and print the results of the model
-resultsK <- fitK %>%
-  pull_workflow_fit() %>%
-  tidy()
-
-print(resultsK)
-
-###########To predict the Mg variable##############
-# Create the recipe for preprocessing
-recipeMg <- recipe(Mg ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
-  step_dummy(all_nominal(), -all_outcomes())
-
-#Fit the model
-fitMg <- workflow() %>%
-  add_recipe(recipeMg) %>%
-  add_model(gamma_spec) %>%
-  fit(data = hapin_merged)
-
-# Extract and print the results of the model
-resultsMg <- fitMg %>%
-  pull_workflow_fit() %>%
-  tidy()
-
-print(resultsMg)
-
-###########To predict the Mn variable##############
-# Create the recipe for preprocessing
-recipeMn <- recipe(Mn ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
-  step_dummy(all_nominal(), -all_outcomes())
-
-#Fit the model
-fitMn <- workflow() %>%
-  add_recipe(recipeMn) %>%
-  add_model(gamma_spec) %>%
-  fit(data = hapin_merged)
-
-# Extract and print the results of the model
-resultsMn <- fitMn %>%
-  pull_workflow_fit() %>%
-  tidy()
-
-print(resultsMn)
-
-###########To predict the S variable##############
-# Create the recipe for preprocessing
-recipeSul <- recipe(S ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
-  step_dummy(all_nominal(), -all_outcomes())
-
-#Fit the model
-fitSul <- workflow() %>%
-  add_recipe(recipeSul) %>%
-  add_model(gamma_spec) %>%
-  fit(data = hapin_merged)
-
-# Extract and print the results of the model
-resultsSul <- fitSul %>%
-  pull_workflow_fit() %>%
-  tidy()
-
-print(resultsSul)
-
-###########To predict the Si variable##############
-# Create the recipe for preprocessing
-recipeSi <- recipe(Si ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
-  step_dummy(all_nominal(), -all_outcomes())
-
-#Fit the model
-fitSi <- workflow() %>%
-  add_recipe(recipeSi) %>%
-  add_model(gamma_spec) %>%
-  fit(data = hapin_merged)
-
-# Extract and print the results of the model
-resultsSi <- fitSi %>%
-  pull_workflow_fit() %>%
-  tidy()
-
-print(resultsSi)
-
-###########To predict the Ti variable##############
-# Create the recipe for preprocessing
-recipeTi <- recipe(Ti ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
-  step_dummy(all_nominal(), -all_outcomes())
-
-#Fit the model
-fitTi <- workflow() %>%
-  add_recipe(recipeTi) %>%
-  add_model(gamma_spec) %>%
-  fit(data = hapin_merged)
-
-# Extract and print the results of the model
-resultsTi <- fitTi %>%
-  pull_workflow_fit() %>%
-  tidy()
-
-print(resultsTi)
-
-###########To predict the Zn variable##############
-# Create the recipe for preprocessing
-recipeZn <- recipe(Zn ~ stove + smoke + coil + trash + kerosene + smoky + crop + stove_other + fueltype, data = hapin_merged) %>%
-  step_dummy(all_nominal(), -all_outcomes())
-
-#Fit the model
-fitZn <- workflow() %>%
-  add_recipe(recipeZn) %>%
-  add_model(gamma_spec) %>%
-  fit(data = hapin_merged)
-
-# Extract and print the results of the model
-resultsZn <- fitZn %>%
-  pull_workflow_fit() %>%
-  tidy()
-
-print(resultsZn)
+glmbc_fit <- glmbc_wflow %>% fit(data = train_data) #Fit the model
 ```
 
-Based on the previous models, it seems like the most important variables are `fueltype` (as expected), `kerosene`, `stove_other` and `smoke` depending on the chemical species. I was worried of the low variability on responses for some of the variables so I am going to use only the variables `micro_exposures`, `macro_exposures`, `kerosene`, `stove_other` and `fueltype`.
+Extracting the results from each model.
 
 ```{r}
-###########To predict the Al variable##############
-# Create the recipe for preprocessing
-recipeAl2 <- recipe(Al ~ micro_exposures + macro_exposures + stove_other + fueltype, data = hapin_merged) %>%
-  step_dummy(all_nominal(), -all_outcomes())
-
-#Fit the model
-fitAl2 <- workflow() %>%
-  add_recipe(recipeAl2) %>%
-  add_model(gamma_spec) %>%
-  fit(data = hapin_merged)
-
-# Extract and print the results of the model
-resultsAl2 <- fitAl2 %>%
-  pull_workflow_fit() %>%
+# Extract and print the results of the models
+results_pmlin <- linpm_fit %>% #PM2.5 Linear
+  extract_fit_parsnip() %>%
   tidy()
 
-print(resultsAl2)
-
-###########To predict the BC variable##############
-# Create the recipe for preprocessing
-recipeBC2 <- recipe(BC ~ micro_exposures + macro_exposures + stove_other + fueltype, data = hapin_merged) %>%
-  step_dummy(all_nominal(), -all_outcomes())
-
-#Fit the model
-fitBC2 <- workflow() %>%
-  add_recipe(recipeBC2) %>%
-  add_model(gamma_spec) %>%
-  fit(data = hapin_merged)
-
-# Extract and print the results of the model
-resultsBC2 <- fitBC2 %>%
-  pull_workflow_fit() %>%
+results_pmglm <- glmpm_fit %>% #PM2.5 GLM
+  extract_fit_parsnip() %>%
   tidy()
 
-print(resultsBC2)
-
-###########To predict the Ca variable##############
-# Create the recipe for preprocessing
-recipeCa2 <- recipe(Ca ~ micro_exposures + macro_exposures + stove_other + fueltype, data = hapin_merged) %>%
-  step_dummy(all_nominal(), -all_outcomes())
-
-#Fit the model
-fitCa2 <- workflow() %>%
-  add_recipe(recipeCa2) %>%
-  add_model(gamma_spec) %>%
-  fit(data = hapin_merged)
-
-# Extract and print the results of the model
-resultsCa2 <- fitCa2 %>%
-  pull_workflow_fit() %>%
+results_bclin <- linbc_fit %>% #BC Linear
+  extract_fit_parsnip() %>%
   tidy()
 
-print(resultsCa2)
-
-###########To predict the Fe variable##############
-# Create the recipe for preprocessing
-recipeFe2 <- recipe(Fe ~ micro_exposures + macro_exposures + stove_other + fueltype, data = hapin_merged) %>%
-  step_dummy(all_nominal(), -all_outcomes())
-
-#Fit the model
-fitFe2 <- workflow() %>%
-  add_recipe(recipeFe2) %>%
-  add_model(gamma_spec) %>%
-  fit(data = hapin_merged)
-
-# Extract and print the results of the model
-resultsFe2 <- fitFe2 %>%
-  pull_workflow_fit() %>%
+results_bcglm <- glmbc_fit %>% #BC GLM
+  extract_fit_parsnip() %>%
   tidy()
 
-print(resultsFe2)
-
-###########To predict the K variable##############
-# Create the recipe for preprocessing
-recipeK2 <- recipe(K ~ micro_exposures + macro_exposures + stove_other + fueltype, data = hapin_merged) %>%
-  step_dummy(all_nominal(), -all_outcomes())
-
-#Fit the model
-fitK2 <- workflow() %>%
-  add_recipe(recipeK2) %>%
-  add_model(gamma_spec) %>%
-  fit(data = hapin_merged)
-
-# Extract and print the results of the model
-resultsK2 <- fitK2 %>%
-  pull_workflow_fit() %>%
-  tidy()
-
-print(resultsK2)
-
-###########To predict the Mg variable##############
-# Create the recipe for preprocessing
-recipeMg2 <- recipe(Mg ~ micro_exposures + macro_exposures + stove_other + fueltype, data = hapin_merged) %>%
-  step_dummy(all_nominal(), -all_outcomes())
-
-#Fit the model
-fitMg2 <- workflow() %>%
-  add_recipe(recipeMg2) %>%
-  add_model(gamma_spec) %>%
-  fit(data = hapin_merged)
-
-# Extract and print the results of the model
-resultsMg2 <- fitMg2 %>%
-  pull_workflow_fit() %>%
-  tidy()
-
-print(resultsMg2)
-
-###########To predict the Mn variable##############
-# Create the recipe for preprocessing
-recipeMn2 <- recipe(Mn ~ micro_exposures + macro_exposures + stove_other + fueltype, data = hapin_merged) %>%
-  step_dummy(all_nominal(), -all_outcomes())
-
-#Fit the model
-fitMn2 <- workflow() %>%
-  add_recipe(recipeMn2) %>%
-  add_model(gamma_spec) %>%
-  fit(data = hapin_merged)
-
-# Extract and print the results of the model
-resultsMn2 <- fitMn2 %>%
-  pull_workflow_fit() %>%
-  tidy()
-
-print(resultsMn2)
-
-###########To predict the S variable##############
-# Create the recipe for preprocessing
-recipeSul2 <- recipe(S ~ micro_exposures + macro_exposures + stove_other + fueltype, data = hapin_merged) %>%
-  step_dummy(all_nominal(), -all_outcomes())
-
-#Fit the model
-fitSul2 <- workflow() %>%
-  add_recipe(recipeSul2) %>%
-  add_model(gamma_spec) %>%
-  fit(data = hapin_merged)
-
-# Extract and print the results of the model
-resultsSul2 <- fitSul2 %>%
-  pull_workflow_fit() %>%
-  tidy()
-
-print(resultsSul2)
-
-###########To predict the Si variable##############
-# Create the recipe for preprocessing
-recipeSi2 <- recipe(Si ~ micro_exposures + macro_exposures + stove_other + fueltype, data = hapin_merged) %>%
-  step_dummy(all_nominal(), -all_outcomes())
-
-#Fit the model
-fitSi2 <- workflow() %>%
-  add_recipe(recipeSi2) %>%
-  add_model(gamma_spec) %>%
-  fit(data = hapin_merged)
-
-# Extract and print the results of the model
-resultsSi2 <- fitSi2 %>%
-  pull_workflow_fit() %>%
-  tidy()
-
-print(resultsSi2)
-
-###########To predict the Ti variable##############
-# Create the recipe for preprocessing
-recipeTi2 <- recipe(Ti ~ micro_exposures + macro_exposures + stove_other + fueltype, data = hapin_merged) %>%
-  step_dummy(all_nominal(), -all_outcomes())
-
-#Fit the model
-fitTi2 <- workflow() %>%
-  add_recipe(recipeTi2) %>%
-  add_model(gamma_spec) %>%
-  fit(data = hapin_merged)
-
-# Extract and print the results of the model
-resultsTi2 <- fitTi2 %>%
-  pull_workflow_fit() %>%
-  tidy()
-
-print(resultsTi2)
-
-###########To predict the Zn variable##############
-# Create the recipe for preprocessing
-recipeZn2 <- recipe(Zn ~ micro_exposures + macro_exposures + stove_other + fueltype, data = hapin_merged) %>%
-  step_dummy(all_nominal(), -all_outcomes())
-
-#Fit the model
-fitZn2 <- workflow() %>%
-  add_recipe(recipeZn2) %>%
-  add_model(gamma_spec) %>%
-  fit(data = hapin_merged)
-
-# Extract and print the results of the model
-resultsZn2 <- fitZn2 %>%
-  pull_workflow_fit() %>%
-  tidy()
-
-print(resultsZn2)
+#Print the results
+print(results_pmlin)
+print(results_pmglm)
+print(results_bclin)
+print(results_bcglm)
 ```
 
-Using this approach it seems like only `fueltype` and `other_stove` are almost all of the variables important to make predictions of the chemical species.
-
-And now evaluating both models for all the species. First I will set the resampling method using cross-validation.
+Now, doing an evaluation of each model First, by estimating the metrics (In this case I will use RMSE, R-squared and MAE). First computing the predictions to make comparisons with the observed values.
 
 ```{r}
-#Set the seed for reproducibility
-set.seed(1234)
+#Compute the predictions
+#PM2.5 models
+lin_pm_pred <- linpm_fit %>% predict(train_data)
+glm_pm_pred <- glmpm_fit %>% predict(train_data)
+#BC models
+lin_bc_pred <- linbc_fit %>% predict(train_data)
+glm_bc_pred <- glmbc_fit %>% predict(train_data)
 
-# Set up resampling method with 10 folds cross-validation
-samples <- vfold_cv(hapin_merged, v = 10)
+#Compute the metrics
+#PM2.5 models
+lin_pm_metrics <-  bind_cols(train_data, lin_pm_pred) %>% metrics(truth = pm25, estimate = .pred) 
+glm_pm_metrics <- bind_cols(train_data, glm_pm_pred) %>% metrics(truth = pm25, estimate = .pred)
+#BC Models
+lin_bc_metrics <-  bind_cols(train_data, lin_bc_pred) %>% metrics(truth = BC, estimate = .pred) 
+glm_bc_metrics <- bind_cols(train_data, glm_bc_pred) %>% metrics(truth = BC, estimate = .pred)
+
+#Print the metrics
+print(lin_pm_metrics)
+print(glm_pm_metrics)
+print(lin_bc_metrics)
+print(glm_bc_metrics)
 ```
 
-And now evaluating both models of `Al` using the RMSE and R-squared values for both models. The same process will be described below for the other chemical species.
+Continue the model evaluation, plotting the observed vs predicted values for each model.
 
 ```{r}
-###### MODEL 1 #######
-# Fit the model using cross-validation
-Al_evaluation <- workflow() %>%
-  add_recipe(recipeAl) %>%
-  add_model(gamma_spec) %>%
-  fit_resamples(resamples = samples)
+#Create dataframes to compute the plots
+#PM2.5
+pred_pm1 <- data.frame(predicted = lin_pm_pred$.pred, model = "linear")
+pred_pm2 <- data.frame(predicted = glm_pm_pred$.pred, model = "GLM")
+#BC
+pred_bc1 <- data.frame(predicted = lin_bc_pred$.pred, model = "linear")
+pred_bc2 <- data.frame(predicted = glm_bc_pred$.pred, model = "GLM")
 
-# Extract the results of the model
-Al_metrics <- Al_evaluation %>%
-  collect_metrics()
+#Merge data frames
+#PM2.5
+pmdata_plot <- bind_rows(pred_pm1, pred_pm2) %>% 
+  mutate(observed = rep(train_data$pm25, 2))
+#BC
+bcdata_plot <- bind_rows(pred_bc1, pred_bc2) %>% 
+  mutate(observed = rep(train_data$BC, 2))
 
-###### MODEL 2 ######
-# Fit the model using cross-validation
-Al2_evaluation <- workflow() %>%
-  add_recipe(recipeAl2) %>%
-  add_model(gamma_spec) %>%
-  fit_resamples(resamples = samples)
+#Create pred-obs plot
 
-# Extract the results of the model
-Al2_metrics <- Al2_evaluation %>%
-  collect_metrics()
+#Define colors
+my_colors <- c("GLM" = "#E1BE6A", "linear" = "#40B0A6")
 
-#Print the RMSE and R-square for both models
-print(Al_metrics)
-print(Al2_metrics)
+#PM2.5
+pmpreds <- ggplot(pmdata_plot) +
+  geom_point(aes(x = observed, y = predicted, color= model), size= 2) +
+  facet_wrap(~ model)+
+  scale_color_manual(values = my_colors)+
+  labs(x = "Observed", y = "Predicted") +
+  geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black") +
+  theme_bw()
+
+#BC
+bcpreds <- ggplot(bcdata_plot) +
+  geom_point(aes(x = observed, y = predicted, color= model), size= 2) +
+  facet_wrap(~ model)+
+  scale_color_manual(values = my_colors)+
+  labs(x = "Observed", y = "Predicted") +
+  theme_bw()
+
+#Visualize plots
+pmpreds
+bcpreds
+
+#Save plots
+ggsave(here("results", "figures", "obs-pred_pm25.png"), plot = pmpreds, width = 10, height = 6, dpi = 300)
+ggsave(here("results", "figures", "obs-pred_bc.png"), plot = bcpreds, width = 10, height = 6, dpi = 300)
 ```
 
-Now for BC...
+Also, computing the residuals for each model and plotting them.
 
 ```{r}
-###### MODEL 1 #######
-# Fit the model using cross-validation
-BC_evaluation <- workflow() %>%
-  add_recipe(recipeBC) %>%
-  add_model(gamma_spec) %>%
-  fit_resamples(resamples = samples)
+#Calculate residuals and create data frame
+#PM2.5
+pmdata_plot <- pmdata_plot %>% mutate(observation = 1:988, residuals = observed - predicted)
+#BC
+bcdata_plot <- bcdata_plot %>% mutate(observation = 1:988, residuals = observed - predicted)
 
-# Extract the results of the model
-BC_metrics <- BC_evaluation %>%
-  collect_metrics()
+# Plot residuals using ggplot
+#PM2.5
+pmresiduals <- ggplot(pmdata_plot) +
+  geom_point(aes(x = observation, y = residuals, color= model), size= 2) +
+  geom_abline(intercept = 0, slope = 0, linetype = "dashed", color = "black") +
+  scale_color_manual(values = my_colors)+
+  labs(x = "Data point",
+       y = "Residuals")+
+  theme_bw()
 
-###### MODEL 2 ######
-# Fit the model using cross-validation
-BC2_evaluation <- workflow() %>%
-  add_recipe(recipeBC2) %>%
-  add_model(gamma_spec) %>%
-  fit_resamples(resamples = samples)
+#BC
+bcresiduals <- ggplot(bcdata_plot) +
+  geom_point(aes(x = observation, y = residuals, color= model), size= 2) +
+  geom_abline(intercept = 0, slope = 0, linetype = "dashed", color = "black") +
+  scale_color_manual(values = my_colors)+
+  labs(x = "Data point",
+       y = "Residuals")+
+  theme_bw()
 
-# Extract the results of the model
-BC2_metrics <- BC2_evaluation %>%
-  collect_metrics()
+#Visualize plots
+pmresiduals
+bcresiduals
 
-#Print the RMSE and R-square for both models
-print(BC_metrics)
-print(BC2_metrics)
+#Save plots
+ggsave(here("results", "figures", "residuals-pm25.png"), plot = pmresiduals, width = 10, height = 6, dpi = 300)
+ggsave(here("results", "figures", "residuals-bc.png"), plot = bcresiduals, width = 10, height = 6, dpi = 300)
 ```
 
-Now for Ca...
+And then computing the 90% confidence intervals for the predicted values for each model.
 
 ```{r}
-###### MODEL 1 #######
-# Fit the model using cross-validation
-Ca_evaluation <- workflow() %>%
-  add_recipe(recipeCa) %>%
-  add_model(gamma_spec) %>%
-  fit_resamples(resamples = samples)
+## ----Model 1: PM2.5 Linear---- ##
+# Compute prediction intervals
+pred_int_linpm <- predict(linpm_fit, train_data, type = "conf_int", level = 0.90) %>%
+  mutate(observation = 1:494)
 
-# Extract the results of the model
-Ca_metrics <- Ca_evaluation %>%
-  collect_metrics()
-
-###### MODEL 2 ######
-# Fit the model using cross-validation
-Ca2_evaluation <- workflow() %>%
-  add_recipe(recipeCa2) %>%
-  add_model(gamma_spec) %>%
-  fit_resamples(resamples = samples)
-
-# Extract the results of the model
-Ca2_metrics <- Ca2_evaluation %>%
-  collect_metrics()
-
-#Print the RMSE and R-square for both models
-print(Ca_metrics)
-print(Ca2_metrics)
+# Combine the lower and upper bounds with the observed values
+pred_int_linpm <- cbind(lin_pm_pred, pred_int_linpm, train_data$pm25)
+pred_int_linpm <- pred_int_linpm %>% rename(observed = "train_data$pm25")
 ```
 
-Now for Fe...
+Finally, plotting the predictions and the prediction intervals.
 
 ```{r}
-###### MODEL 1 #######
-# Fit the model using cross-validation
-Fe_evaluation <- workflow() %>%
-  add_recipe(recipeFe) %>%
-  add_model(gamma_spec) %>%
-  fit_resamples(resamples = samples)
-
-# Extract the results of the model
-Fe_metrics <- Fe_evaluation %>%
-  collect_metrics()
-
-###### MODEL 2 ######
-# Fit the model using cross-validation
-Fe2_evaluation <- workflow() %>%
-  add_recipe(recipeFe2) %>%
-  add_model(gamma_spec) %>%
-  fit_resamples(resamples = samples)
-
-# Extract the results of the model
-Fe2_metrics <- Fe2_evaluation %>%
-  collect_metrics()
-
-#Print the RMSE and R-square for both models
-print(Fe_metrics)
-print(Fe2_metrics)
+#Prediction interval plot for the linear model of PM2.5
+ggplot(pred_int_linpm) +
+	geom_errorbar(aes(x = observed, ymin = .pred_lower, ymax = .pred_upper), width = 25) +
+	geom_point(aes(x = observed, y = .pred, color = ".pred"),	shape = 5) +
+	labs(x = "Observed", y = "Predicted", title = "Predicted observation with Prediction Intervals") +
+	geom_abline(intercept = 0, slope = 1, linetype = "dashed", color = "black") +
+	scale_color_manual(values = my_colors) +
+	theme_minimal()
 ```
 
-Now for K...
+This plot looks crowded for the linear model, so I won't use it as part of the final assessment of this and the other models. However I will keep it for future references.
+
+Then, doing a final evaluation of the model using the test data. I decided to select the linear multivariate models for both models (PM2.5 and BC).
 
 ```{r}
-###### MODEL 1 #######
-# Fit the model using cross-validation
-K_evaluation <- workflow() %>%
-  add_recipe(recipeK) %>%
-  add_model(gamma_spec) %>%
-  fit_resamples(resamples = samples)
+## ----PM2.5 Linear---- ##
+#Fit the model using the test data
+linpm_fit_test <- linpm_wflow %>% fit(data = test_data)
 
-# Extract the results of the model
-K_metrics <- K_evaluation %>%
-  collect_metrics()
+#Make predictions in the test data
+pm_preds2 <- linpm_fit_test %>% predict(test_data)
 
-###### MODEL 2 ######
-# Fit the model using cross-validation
-K2_evaluation <- workflow() %>%
-  add_recipe(recipeK2) %>%
-  add_model(gamma_spec) %>%
-  fit_resamples(resamples = samples)
+#Compute the metrics
+linpm_metrics_test <- bind_cols(test_data, pm_preds2) %>% metrics(truth = pm25, estimate = .pred)
 
-# Extract the results of the model
-K2_metrics <- K2_evaluation %>%
-  collect_metrics()
+print(linpm_metrics_test)
 
-#Print the RMSE and R-square for both models
-print(K_metrics)
-print(K2_metrics)
+## ----BC Linear---- ##
+#Fit the model using the test data
+linbc_fit_test <- linbc_wflow %>% fit(data = test_data)
+
+#Make predictions in the test data
+bc_preds2 <- linbc_fit_test %>% predict(test_data)
+
+#Compute the metrics
+linbc_metrics_test <- bind_cols(test_data, bc_preds2) %>% metrics(truth = BC, estimate = .pred)
+
+print(linbc_metrics_test)
 ```
 
-Now for Mg...
+### Save outputs as tables
+
+Creating a table to save all the metric values in one table. First creating new dataframes that includes all metrics for the PM2.5 and BC models.
 
 ```{r}
-###### MODEL 1 #######
-# Fit the model using cross-validation
-Mg_evaluation <- workflow() %>%
-  add_recipe(recipeMg) %>%
-  add_model(gamma_spec) %>%
-  fit_resamples(resamples = samples)
+#Bind dfs that contain all RMSEs and R-squares from the PM2.5 and BC models
+metricspm_final <- bind_rows(lin_pm_metrics, glm_pm_metrics)
+metricsbc_final <- bind_rows(lin_bc_metrics, glm_bc_metrics)
 
-# Extract the results of the model
-Mg_metrics <- Mg_evaluation %>%
-  collect_metrics()
-
-###### MODEL 2 ######
-# Fit the model using cross-validation
-Mg2_evaluation <- workflow() %>%
-  add_recipe(recipeMg2) %>%
-  add_model(gamma_spec) %>%
-  fit_resamples(resamples = samples)
-
-# Extract the results of the model
-Mg2_metrics <- Mg2_evaluation %>%
-  collect_metrics()
-
-#Print the RMSE and R-square for both models
-print(Mg_metrics)
-print(Mg2_metrics)
-```
-
-Now for Mn...
-
-```{r}
-###### MODEL 1 #######
-# Fit the model using cross-validation
-Mn_evaluation <- workflow() %>%
-  add_recipe(recipeMn) %>%
-  add_model(gamma_spec) %>%
-  fit_resamples(resamples = samples)
-
-# Extract the results of the model
-Mn_metrics <- Mn_evaluation %>%
-  collect_metrics()
-
-###### MODEL 2 ######
-# Fit the model using cross-validation
-Mn2_evaluation <- workflow() %>%
-  add_recipe(recipeMn2) %>%
-  add_model(gamma_spec) %>%
-  fit_resamples(resamples = samples)
-
-# Extract the results of the model
-Mn2_metrics <- Mn2_evaluation %>%
-  collect_metrics()
-
-#Print the RMSE and R-square for both models
-print(Mn_metrics)
-print(Mn2_metrics)
-```
-
-Now for S...
-
-```{r}
-###### MODEL 1 #######
-# Fit the model using cross-validation
-Sul_evaluation <- workflow() %>%
-  add_recipe(recipeSul) %>%
-  add_model(gamma_spec) %>%
-  fit_resamples(resamples = samples)
-
-# Extract the results of the model
-Sul_metrics <- Sul_evaluation %>%
-  collect_metrics()
-
-###### MODEL 2 ######
-# Fit the model using cross-validation
-Sul2_evaluation <- workflow() %>%
-  add_recipe(recipeSul2) %>%
-  add_model(gamma_spec) %>%
-  fit_resamples(resamples = samples)
-
-# Extract the results of the model
-Sul2_metrics <- Sul2_evaluation %>%
-  collect_metrics()
-
-#Print the RMSE and R-square for both models
-print(Sul_metrics)
-print(Sul2_metrics)
-```
-
-Now for Si...
-
-```{r}
-###### MODEL 1 #######
-# Fit the model using cross-validation
-Si_evaluation <- workflow() %>%
-  add_recipe(recipeSi) %>%
-  add_model(gamma_spec) %>%
-  fit_resamples(resamples = samples)
-
-# Extract the results of the model
-Si_metrics <- Si_evaluation %>%
-  collect_metrics()
-
-###### MODEL 2 ######
-# Fit the model using cross-validation
-Si2_evaluation <- workflow() %>%
-  add_recipe(recipeSi2) %>%
-  add_model(gamma_spec) %>%
-  fit_resamples(resamples = samples)
-
-# Extract the results of the model
-Si2_metrics <- Si2_evaluation %>%
-  collect_metrics()
-
-#Print the RMSE and R-square for both models
-print(Si_metrics)
-print(Si2_metrics)
-```
-
-Now for Ti...
-
-```{r}
-###### MODEL 1 #######
-# Fit the model using cross-validation
-Ti_evaluation <- workflow() %>%
-  add_recipe(recipeTi) %>%
-  add_model(gamma_spec) %>%
-  fit_resamples(resamples = samples)
-
-# Extract the results of the model
-Ti_metrics <- Ti_evaluation %>%
-  collect_metrics()
-
-###### MODEL 2 ######
-# Fit the model using cross-validation
-Ti2_evaluation <- workflow() %>%
-  add_recipe(recipeTi2) %>%
-  add_model(gamma_spec) %>%
-  fit_resamples(resamples = samples)
-
-# Extract the results of the model
-Ti2_metrics <- Ti2_evaluation %>%
-  collect_metrics()
-
-#Print the RMSE and R-square for both models
-print(Ti_metrics)
-print(Ti2_metrics)
-```
-
-Now for Zn...
-
-```{r}
-###### MODEL 1 #######
-# Fit the model using cross-validation
-Zn_evaluation <- workflow() %>%
-  add_recipe(recipeZn) %>%
-  add_model(gamma_spec) %>%
-  fit_resamples(resamples = samples)
-
-# Extract the results of the model
-Zn_metrics <- Zn_evaluation %>%
-  collect_metrics()
-
-###### MODEL 2 ######
-# Fit the model using cross-validation
-Zn2_evaluation <- workflow() %>%
-  add_recipe(recipeZn2) %>%
-  add_model(gamma_spec) %>%
-  fit_resamples(resamples = samples)
-
-# Extract the results of the model
-Zn2_metrics <- Zn2_evaluation %>%
-  collect_metrics()
-
-#Print the RMSE and R-square for both models
-print(Zn_metrics)
-print(Zn2_metrics)
-```
-
-For all of the models it seems like the model with all the predictors works best, instead of grouping the predcitors (exposures) in further categories. However, the R-square and RMSE values are really low, so maybe a different approach for modeling is required.
-
-I will do an attempt to save all the RMSE an R-squared values in one table:
-
-```{r}
-#Bind dfs that contain all RMSEs and R-squares from all models
-metrics_final <- bind_rows(Al_metrics, Al2_metrics, BC_metrics, BC2_metrics, Ca_metrics, Ca2_metrics, Fe_metrics, Fe2_metrics,
-                           K_metrics, K2_metrics, Mg_metrics, Mg2_metrics, Mn_metrics, Mn2_metrics, Si_metrics, Si2_metrics,
-                           Sul_metrics, Sul2_metrics, Ti_metrics, Ti2_metrics, Zn_metrics, Zn2_metrics)
-
-#Create a vector to name all chemical species
-species <- rep(c("Al", "BC", "Ca", "Fe", "K", "Mg", "Mn", "Si", "S", "Ti", "Zn"), each = 4)
-
-# Adding the 'chemical_species' variable to 'metrics_final'
-metrics_final$Species <- species
+#Delete non-necessary columns
+metricspm_final <- metricspm_final %>% select(-.estimator)
+metricsbc_final <- metricsbc_final %>% select(-.estimator)
 
 # Creating a vector of observation types
-obs <- rep(c(rep("N1", 2), rep("N2", 2)), length.out = 44)
+obs <- rep(c(rep("M1", 3), rep("M2", 3)), length.out = 6)
 
 # Adding the 'obs' variable to 'metrics_final'
-metrics_final$obs <- obs
-
-#Finally, delete non-necessary columns
-metrics_final <- metrics_final %>% select(-c(.estimator, n, std_err, .config))
+metricspm_final$obs <- obs
+metricsbc_final$obs <- obs
 ```
 
 Do additional adjustments to the metrics table, and then save it as an .RDS file.
 
 ```{r}
 #Change dataframe from long to wide
-metrics_wide <- metrics_final %>% pivot_wider(names_from = obs, values_from = mean)
+metricspm_wide <- metricspm_final %>% pivot_wider(names_from = obs, values_from = .estimate)
+metricsbc_wide <- metricsbc_final %>% pivot_wider(names_from = obs, values_from = .estimate)
 
 #Rename columns, rearrange them and edit values for some columns
-metrics_wide <- metrics_wide %>% rename(Metric = ".metric", Model1 = "N1", Model2 = "N2") %>%
-  select(c(Species, Metric, Model1, Model2))
+metricspm_wide <- metricspm_wide %>% 
+  rename(Metric = ".metric", Linear = "M1", GLM = "M2") %>% 
+  mutate(Metric = case_when(Metric == "rmse" ~ "RMSE",
+                            Metric == "rsq" ~ "R-squared",
+                            Metric == "mae" ~ "MAE", TRUE ~ Metric))
+
+metricsbc_wide <- metricsbc_wide %>% 
+  rename(Metric = ".metric", Linear = "M1", GLM = "M2") %>% 
+  mutate(Metric = case_when(Metric == "rmse" ~ "RMSE",
+                            Metric == "rsq" ~ "R-squared",
+                            Metric == "mae" ~ "MAE", TRUE ~ Metric))
+
 
 #Save df as .RDS file
-saveRDS(metrics_wide, file = here("results", "tables", "model_metrics.rds"))
+saveRDS(metricspm_wide, file = here("results", "tables", "pmmodel_metrics.rds"))
+saveRDS(metricsbc_wide, file = here("results", "tables", "bcmodel_metrics.rds"))
 ```

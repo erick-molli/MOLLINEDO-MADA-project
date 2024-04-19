@@ -14,7 +14,7 @@ used to keep track of packages.
 
 ## To Run the script
 
-To run the whole analysis, I placed all the code chunks under the `data_analysis_code.qmd` file under the `code` folder. This file should run smoothly if running the chunks in order. For a more descriptive detail on the data cleaning/exploratory analysis there are separate files under the `code` folder.
+To run the analyses, I placed all the code chunks under the `code` folder. There should be one file for data cleaning `data_cleaning_code.qmd`, one for exploratory analysis `data_exploring_code.qmd` and one for the statistical analyses `data_analysis_code.qmd`. The codes must me run in the exact same order as listed here, once, and after doing that, if there is a need to inspect each process, each code can be run sepparately, since the files as inputs will be generated from the first run.
 
 
 
