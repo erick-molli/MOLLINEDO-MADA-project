@@ -1,0 +1,187 @@
+---
+title: Project Review Robertson 
+author: Rachel Robertson
+date: 4-26-24
+format: 
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+---
+
+# Overview
+
+Title of project: "Elemental characterization of personal filter samples from the Household Air Pollution Intervention Network (HAPIN) trial for Source Apportionment"
+
+Name of project author(s): Erick Mollinedo
+
+Name of project reviewer: Rachel Robertson
+
+# Specific project content evaluation
+
+## Background, Context and Motivation
+
+>How well is the context of the project described? Is a comprehensive background, including summary of previous/related work given? Is the project well placed into the context of existing work (including proper referencing of existing work). Is it clear why the project was undertaken and what new information it hopes to provide?
+
+### Feedback and Comments
+
+Great work at providing context for the existing work in the HAPIN trial and using that rationale of providing a basis for SA (or PMF)! I think that the study objectives are very clear! I just have a few comments below:
+
+Great work establishing the importance of studying HAPs. I think that adding statistics about the impact of HAPs in Guatemala (the country of interest), might strengthen the rationale for your study. 
+
+I want to point out that you also do not define LMICs before using the acronym. This might be useful information to add.
+
+Why was the HAPIN trial interested in studying HAP effects on pregnant women? I know that this is to measure the health outcomes of infants (e.g. birthweights), but this might be useful to specify in your background.
+
+### Summary assessment
+
+-   strong contextualization and motivation
+
+## Question description
+
+>How well and clear are the question(s)/hypotheses the project aims to address described? Is it clear how the questions relate to the data?
+
+### Feedback and Comments
+
+The research questions are very clear and straight-forward. I think that question number 2) almost sounds like two questions, because you are categorizing by type of fuel and also by study arm.
+
+Do you have any hypothesis about these questions or is your analysis mainly exploratory?
+
+### Summary assessment
+
+-   question/hypotheses fully clear
+
+## Data description
+
+>How well is the data overall described? Is the source provided? Is a codebook or other meta-information available that makes it clear what the data is?
+
+### Feedback and Comments
+
+Amazing description of where your data came from and how it was collected! However, I did not see a codebook for all of the pollutants included in the original analysis. This might be useful to add to your data file or to the readme in your data file.
+
+### Summary assessment
+
+-   source and overall structure of data well explained
+
+## Data wrangling and exploratory analysis
+
+>How well is the data cleaned/processed and explored? Are all steps reasonable and well explained? Are alternatives discussed and considered? Are meaningful exploratory results shown (e.g. in the supplementary materials)?
+
+### Feedback and Comments
+
+Great work explaining each step of your eda and wrangling with rationale. I have a few questions for you below:
+
+Why were the LOD values that were too low imputed with LOD/ sqrt(2)?
+I think that it is cool that you added your uncertainties to the data for the remaining predictors! You provide good rationale for this as well.
+
+I think you did a great job at including the necessary EDA without providing an overwhelming amount of figures. What is the significance of correlation between certain metal pollutants?
+
+I am also curious about whether you determined the pollutant's importance just off concentration or also on potency. Should each pollutant have a certain weight if they're more potent or should the cut-off be at a significant level of toxicity (which might mean higher concentrations for some pollutants than others)?
+
+### Summary assessment
+
+-   essentially no weaknesses in wrangling and exploratory component
+
+## Appropriateness of Analysis
+
+>Were the analysis methods appropriate for the data? Was the analysis done properly? Were different components of the analysis (e.g. performance measure, variable selection, data pre-processing, model evaluation) done in the best way possible and explained well?
+
+### Feedback and Comments
+
+Overall, from looking at the code and manuscript it seems that the analysis was done properly, but I do not entirely understand What is the rationale for choosing to compare a generalized gamma linear regression and a multivariate linear regression. I am wondering what other kinds of analysis might be appropriate to analyze environmental pollutants. Do these models account for the non-normal distribution of each pollutant?
+
+### Summary assessment
+
+-   defensible but not optimal analysis
+
+## Presentation
+
+>How well are results presented? Are tables and figures easy to read and understand? Are the main figures/tables publication level quality?
+
+### Feedback and Comments
+
+The figures and tables are beautiful and easy to interpret using the labels, title, and caption! They are nicely formatted and publication quality. I feel like the only thing you may consider including are figures from the exploratory analysis that demonstrate the non-normal distribution of the pollutant data.
+
+### Summary assessment
+
+-   results are very well presented
+
+## Discussion/Conclusions
+
+>Are the study findings properly discussed? Are strengths and limitations acknowledged? Are findings interpreted properly?
+
+### Feedback and Comments
+
+Thank you for explaining the potential alternative sources of some important pollutants in the discussion. I also like how you differentiated between clinical significance and importance in SA models. This actually answers my question above, about potency. 
+
+I like how you discuss the limitations of data collection through questionnaire. I also like that you are critical of your analysis method and that it might not be the ideal analysis method.
+
+Despite these limitations, you support that biomass burning is the most significant source of pollution in your study area, which is important.
+
+Should the limitations to the study's data collection be included in your final limitations paragraph (with your analysis limitations)? They should still be included, but I think that perhaps adding the limitations of the collection method to the paragraph that you discuss the HAPIN limitations (such as questionnaire data collection) might be more appropriate.
+
+### Summary assessment
+
+-   strong, complete and clear discussion
+
+## Further comments
+
+I think it might also be useful to add more detail about the significance of yoru findings and how they may specifically be used for PMF analysis in the future.
+
+# Overall project content evaluation
+
+## Structure
+
+> Is the project well structured? Are files in well labeled folders? Do files have reasonable names? Are all "junk" files not needed for analysis/reproduction removed? By just looking at files and folders, can you get an idea of how things fit together?
+
+### Feedback and Comments
+
+There is a copy of the original 'code' file in the 'R' file in your repo (containing code templates). You may consider deleting this, as it caused me some initial confusion. It might also be useful to create separate folders for each of your code files and associated documents (e.g. cleaning, eda, and analysis folders). It may also be useful to create sub-folders in your results/figures folder to organize the figures from each step of your project (e.g. eda figures, model output, model assessment). You may also delete the unused sub-folders in the results folder.
+
+### Summary assessment
+
+-   mostly clear, but some confusing parts (e.g. useless files, things in the wrong folders)
+
+## Documentation
+
+> How well is the project documented? Are you able to understand each step of the whole analysis, each decision that was made, and each line of code? Is enough information provided as comments in code or as part of Rmd files?
+
+### Feedback and Comments
+
+I appreciated that the data cleaning file was explained very thoroughly, with an explanation for each chunk of cleaning steps. In addition, you added labels between lines of codes to specify the functions' purposes.
+You provide rationale for why you do each step of your exploratory analysis. Most of the time, one goes into EDA without much prior knowledge of the data, but your prior knowledge helped you know what to look for during your exploration. Because of this you have well-informed steps in your EDA. It also allowed you to make informed decisions about which model you chose. Great work!
+Again, amazing rationale and output for your analysis code! My only comment is that you may want to include some interpretation under your model performance sections, but this is not necessary.
+I also have one question;
+I was curious why you chose a linear model knowing that the concentration of each pollutant is not normally distributed. Do you think a GAM might be able to capture differences in pollutant distribution trends?
+
+
+### Summary assessment
+
+-   fully and well documented
+
+## Reproducibility
+
+>Are all results fully reproducible? Is documentation provided which clearly explains how to reproduce things, and does it work without the need for any manual intervention? Are you able to re-run the whole analysis without having to do manual interventions/edits?
+
+### Feedback and Comments
+
+There was no need for manual intervention at all! All of the code ran very smoothly for my computer and each step was well documented. Great work!
+
+### Summary assessment
+
+-   fully reproducible without issues
+
+## Thoroughness
+
+>How thorough was the overall study? Were alternatives (e.g. different ways of processing the data or different models) considered? Were alternatives discussed? Were the questions/hypotheses fully and thoroughly addressed?
+
+### Feedback and Comments
+
+As you mentioned in your discussion, another model method, such as LASSO, could be assessed. However, you did consider the pros and cons of the alternatives versus your chosen methods. I would have just liked it if you provided more explanation for why you chose the analysis methods that you used.
+
+I also think that your research questions 1) and 2) could use some more explanation in the discussion, according to what you found in your results.
+
+### Summary assessment
+
+-   decent level of thoroughness
+
